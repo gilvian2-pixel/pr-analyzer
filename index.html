@@ -176,6 +176,16 @@ function App() {
     const pmiMonthly = (tipoH === "Convencional" && pronto < 20) ? hipoteca * 0.0055 / 12 : 0;
     const fhaMipMonthly = tipoH === "FHA" ? hipoteca * 0.0055 / 12 : 0;
     const usdaMonthly = tipoH === "USDA" ? hipoteca * 0.0035 / 12 : 0;
+
+    // Escrow estimado mensual (lo que el banco cobra junto al P&I)
+    const escrowSeguroHogar = precio * 0.0055 / 12;      // seguro hazard ~0.55%/año
+    const escrowCRIM = precio * 0.0083 / 12;             // contribuciones ~1%/año
+    const escrowHuracan = precio * 0.012 / 12;           // huracán ~1.2%/año (PR específico)
+    const escrowMIP = fhaMipMonthly;                     // FHA MIP si aplica
+    const escrowPMI = pmiMonthly;                        // PMI convencional si aplica
+    const escrowUSDA = usdaMonthly;                      // USDA fee si aplica
+    // Pago total estimado al banco (PITI)
+    const pagoTotalMensual = pAndI + escrowSeguroHogar + escrowCRIM + escrowHuracan + escrowMIP + escrowPMI + escrowUSDA;
     const rentaBruta = renta1 + renta2 + renta3;
     const rentaAnual = rentaBruta * 12;
     const gastos = crim + seguro + huracan + inundacion + hoa + pmiMonthly + fhaMipMonthly + usdaMonthly + agua + elec + internet + basura + jardineria + admin + mant + vacancia + extra;
@@ -206,7 +216,7 @@ function App() {
     }
     const tieneHistorial = mesCompra > 0 && anoCompra > 0;
     const equityAcumulado = hipoteca - balanceRestante;
-    return { prontoDlr, hipoteca, capitalTotal, pAndI, pmiMonthly, fhaMipMonthly, usdaMonthly, rentaBruta, rentaAnual, gastos, gastosAnual: gastos * 12, noim, noia, capRate, cfm, cfa, coc, pctGastos, dscr, grm, r50, r1, p, cc, cierreDlr: cc.total, balanceRestante, pagosMensualesRealizados, tieneHistorial, equityAcumulado };
+    return { prontoDlr, hipoteca, capitalTotal, pAndI, pagoTotalMensual, escrowSeguroHogar, escrowCRIM, escrowHuracan, pmiMonthly, fhaMipMonthly, usdaMonthly, rentaBruta, rentaAnual, gastos, gastosAnual: gastos * 12, noim, noia, capRate, cfm, cfa, coc, pctGastos, dscr, grm, r50, r1, p, cc, cierreDlr: cc.total, balanceRestante, pagosMensualesRealizados, tieneHistorial, equityAcumulado };
   }, [precio, pronto, plazo, tasa, tipoH, reparaciones, mesCompra, anoCompra, renta1, renta2, renta3, crim, seguro, huracan, inundacion, hoa, agua, elec, internet, basura, jardineria, admin, mant, vacancia, extra]);
 
   useEffect(() => { setDeudaHipoteca(Math.round(c.balanceRestante)); }, [c.balanceRestante]);
@@ -303,7 +313,7 @@ function App() {
                     <p style={{ fontSize: 9, color: "#5a7a9a", marginBottom: 8 }}>HISTORIAL DE PAGOS</p>
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
                       <div><p style={{ fontSize: 8, color: "#4a4a6a", marginBottom: 3 }}>PAGOS REALIZADOS</p><p style={{ fontSize: 13, fontWeight: 800, color: "#60a5fa" }}>{c.pagosMensualesRealizados} meses</p></div>
-                      <div><p style={{ fontSize: 8, color: "#4a4a6a", marginBottom: 3 }}>PAGO MENSUAL HIPOTECA</p><p style={{ fontSize: 13, fontWeight: 800, color: "#a78bfa" }}>{fmtD(c.pAndI)}</p></div>
+                      <div><p style={{ fontSize: 8, color: "#4a4a6a", marginBottom: 3 }}>PAGO MENSUAL ESTIMADO</p><p style={{ fontSize: 13, fontWeight: 800, color: "#a78bfa" }}>{fmtD(c.pagoTotalMensual)}</p></div>
                       <div><p style={{ fontSize: 8, color: "#4a4a6a", marginBottom: 3 }}>EQUITY ACUMULADO</p><p style={{ fontSize: 13, fontWeight: 800, color: "#22c55e" }}>{fmt(c.equityAcumulado)}</p></div>
                       <div><p style={{ fontSize: 8, color: "#4a4a6a", marginBottom: 3 }}>BALANCE PENDIENTE</p><p style={{ fontSize: 13, fontWeight: 800, color: "#f87171" }}>{fmt(c.balanceRestante)}</p></div>
                     </div>
@@ -312,7 +322,7 @@ function App() {
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6, marginTop: 8 }}>
                 <StatBox label="HIPOTECA ORIGINAL" val={fmt(c.hipoteca)} color="#60a5fa" />
-                <StatBox label="P&I /MES" val={fmtD(c.pAndI)} color="#a78bfa" />
+                <StatBox label="PAGO MENSUAL EST." val={fmtD(c.pagoTotalMensual)} color="#a78bfa" />
                 <StatBox label="CAPITAL TOTAL" val={fmt(c.capitalTotal)} color="#f59e0b" />
               </div>
             </Sec>
@@ -459,7 +469,31 @@ function App() {
               <Card label="DSCR" val={c.dscr.toFixed(2) + "x"} sub="NOI / P&I (banco ≥1.25x)" color={c.dscr >= 1.25 ? "#22c55e" : "#ef4444"} badge={c.dscr >= 1.25 ? "✓ Apto" : "⚠ Bajo"} />
               <Card label="GRM" val={c.grm.toFixed(1) + "x"} sub="Precio / Renta anual (≤10)" color={c.grm <= 10 ? "#22c55e" : c.grm <= 14 ? "#f59e0b" : "#ef4444"} />
               <Card label="Gastos / Renta" val={fmtPct(c.pctGastos)} sub="Sin hipoteca (meta ≤50%)" color={c.pctGastos <= 50 ? "#22c55e" : "#ef4444"} />
-              <Card label="Capital Total" val={fmt(c.capitalTotal)} sub="Pronto + Cierre + Reparaciones" color="#a78bfa" />
+              <Card label="Capital Total Necesario" val={fmt(c.capitalTotal)} sub="Pronto + Cierre + Reparaciones" color="#a78bfa" />
+            </div>
+
+            {/* PITI Breakdown */}
+            <div style={{ background: "#0d0d18", border: "1px solid #a78bfa40", borderRadius: 12, padding: "14px 18px", marginBottom: 12 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                <p style={{ fontSize: 10, color: "#a78bfa", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>💳 Pago Mensual Estimado al Banco (PITI)</p>
+                <p style={{ fontSize: 20, fontWeight: 900, color: "#a78bfa", fontFamily: "monospace" }}>{fmtD(c.pagoTotalMensual)}</p>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 8 }}>
+                {[
+                  ["P&I (Principal + Interés)", fmtD(c.pAndI), "#e0e0f0"],
+                  ["Seguro de Hogar", fmtD(c.escrowSeguroHogar), "#fb923c"],
+                  ["CRIM / Contribuciones", fmtD(c.escrowCRIM), "#f59e0b"],
+                  ["Seguro Huracán (est.)", fmtD(c.escrowHuracan), "#f59e0b"],
+                  c.fhaMipMonthly > 0 ? ["FHA MIP Mensual", fmtD(c.fhaMipMonthly), "#f87171"] : c.pmiMonthly > 0 ? ["PMI Mensual", fmtD(c.pmiMonthly), "#f87171"] : ["Seguro Gob.", "N/A", "#3a3a5a"],
+                  ["TOTAL ESTIMADO", fmtD(c.pagoTotalMensual), "#a78bfa"],
+                ].map(([l, v, col]) => (
+                  <div key={l} style={{ background: "#0a0a12", borderRadius: 7, padding: "8px 10px" }}>
+                    <p style={{ fontSize: 8, color: "#4a4a6a", marginBottom: 4, textTransform: "uppercase" }}>{l}</p>
+                    <p style={{ fontSize: 13, fontWeight: 800, color: col }}>{v}</p>
+                  </div>
+                ))}
+              </div>
+              <p style={{ fontSize: 9, color: "#3a3a5a", marginTop: 10 }}>⚠ Estimado. El banco cobra P&I + escrow de seguros y contribuciones en un solo pago. Confirma con tu banco las pólizas reales.</p>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
               {[{ label: "Regla del 50%", pass: c.r50, desc: `Gastos ${fmtPct(c.pctGastos)} de renta. Límite: ${fmtD(c.rentaBruta * 0.5)}/mes` }, { label: "Regla del 1%", pass: c.r1, desc: `Renta ${fmtD(c.rentaBruta)}/mes vs 1% precio = ${fmtD(precio * 0.01)}/mes` }].map(({ label, pass, desc }) => (
