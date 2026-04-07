@@ -24,114 +24,124 @@
 <script type="text/babel">
 const { useState, useMemo, useEffect } = React;
 
-const fmt = (n) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n || 0);
-const fmtD = (n) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 }).format(n || 0);
-const fmtPct = (n) => `${(n || 0).toFixed(2)}%`;
+const fmt  = n => new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",minimumFractionDigits:0,maximumFractionDigits:0}).format(n||0);
+const fmtD = n => new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",minimumFractionDigits:2}).format(n||0);
+const fmtPct = n => `${(n||0).toFixed(2)}%`;
 
-const calcPI = (principal, rate, years) => {
-  if (!principal || !rate || !years) return 0;
-  const r = rate / 100 / 12;
-  const n = years * 12;
-  if (r === 0) return principal / n;
-  return (principal * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+const calcPI = (p, r, y) => {
+  if (!p||!r||!y) return 0;
+  const m = r/100/12, n = y*12;
+  if (m===0) return p/n;
+  return p*m*Math.pow(1+m,n)/(Math.pow(1+m,n)-1);
 };
 
-function calcClosingCosts(precio, prontoDlr, hipoteca, tipoH) {
+function calcCC(precio, hipoteca, tipoH) {
   const items = [];
-  const notarioFee = precio <= 150000 ? precio * 0.01 : 150000 * 0.01 + (precio - 150000) * 0.005;
-  items.push({ cat: "Legal & Notarial", label: "Honorarios Notario/Abogado", amount: notarioFee, note: "1% ≤$150k / 0.5% resto" });
-  const registryFee = precio <= 25000 ? 50 : 50 + Math.ceil((precio - 25000) / 1000) * 4;
-  items.push({ cat: "Gobierno PR", label: "Registro de la Propiedad", amount: registryFee, note: "$50 + $4 x $1k adicional" });
-  items.push({ cat: "Gobierno PR", label: "Sello Rentas Internas", amount: Math.round(precio / 2) / 100 + 1, note: "Precio/2 + $1" });
-  const legalStamp = Math.ceil(precio / 50000) * 5;
-  items.push({ cat: "Gobierno PR", label: "Sello Asistencia Legal", amount: Math.round(legalStamp / 2), note: "$5 x cada $50k" });
-  items.push({ cat: "Gobierno PR", label: "Sello Notarial", amount: 1, note: "Fijo $1.00" });
-  items.push({ cat: "Gobierno PR", label: "Electronic Filing Fee (ARPE)", amount: 20, note: "Fijo" });
-  items.push({ cat: "Título & Seguro", label: "Title Insurance (Loan Policy)", amount: hipoteca * 0.004, note: "~0.4% del préstamo" });
-  items.push({ cat: "Título & Seguro", label: "Estudio de Título", amount: 350, note: "Estimado fijo" });
-  items.push({ cat: "Banco / Préstamo", label: "Tasación (Appraisal)", amount: 450, note: "$350-$600 típico en PR" });
-  items.push({ cat: "Banco / Préstamo", label: "Origination Fee", amount: hipoteca * 0.0075, note: "~0.75% del préstamo" });
-  items.push({ cat: "Banco / Préstamo", label: "Reporte de Crédito", amount: 65, note: "Estimado fijo" });
-  items.push({ cat: "Banco / Préstamo", label: "Underwriting Fee", amount: 650, note: "Estimado fijo" });
-  items.push({ cat: "Prepagados (Escrow)", label: "Seguro de Hogar Prepagado (2 meses)", amount: precio * 0.0055 / 12 * 2, note: "~0.55%/año × 2 meses" });
-  items.push({ cat: "Prepagados (Escrow)", label: "CRIM Prepagado (2 meses)", amount: precio * 0.0083 / 12 * 2, note: "~1% anual × 2 meses" });
-  if (tipoH === "FHA") items.push({ cat: "Seguro Gubernamental", label: "FHA Upfront MIP (UFMIP)", amount: hipoteca * 0.0175, note: "1.75% — puede financiarse" });
-  if (tipoH === "VA") items.push({ cat: "Seguro Gubernamental", label: "VA Funding Fee", amount: hipoteca * 0.0215, note: "2.15% primera vez" });
-  if (tipoH === "USDA") items.push({ cat: "Seguro Gubernamental", label: "USDA Guarantee Fee", amount: hipoteca * 0.01, note: "1% del préstamo" });
-  const total = items.reduce((s, i) => s + i.amount, 0);
-  return { items, total };
+  const notario = precio<=150000 ? precio*0.01 : 150000*0.01+(precio-150000)*0.005;
+  items.push({cat:"Legal & Notarial",label:"Honorarios Notario/Abogado",amount:notario,note:"1% ≤$150k / 0.5% resto"});
+  const reg = precio<=25000 ? 50 : 50+Math.ceil((precio-25000)/1000)*4;
+  items.push({cat:"Gobierno PR",label:"Registro de la Propiedad",amount:reg,note:"$50 + $4 x $1k adicional"});
+  items.push({cat:"Gobierno PR",label:"Sello Rentas Internas",amount:Math.round(precio/2)/100+1,note:"Precio/2 + $1"});
+  items.push({cat:"Gobierno PR",label:"Sello Asistencia Legal",amount:Math.round(Math.ceil(precio/50000)*5/2),note:"$5 x cada $50k"});
+  items.push({cat:"Gobierno PR",label:"Sello Notarial",amount:1,note:"Fijo $1.00"});
+  items.push({cat:"Gobierno PR",label:"Electronic Filing (ARPE)",amount:20,note:"Fijo"});
+  items.push({cat:"Título & Seguro",label:"Title Insurance (Loan Policy)",amount:hipoteca*0.004,note:"~0.4% del préstamo"});
+  items.push({cat:"Título & Seguro",label:"Estudio de Título",amount:350,note:"Estimado fijo"});
+  items.push({cat:"Banco / Préstamo",label:"Tasación (Appraisal)",amount:450,note:"$350-$600 típico en PR"});
+  items.push({cat:"Banco / Préstamo",label:"Origination Fee",amount:hipoteca*0.0075,note:"~0.75% del préstamo"});
+  items.push({cat:"Banco / Préstamo",label:"Reporte de Crédito",amount:65,note:"Estimado fijo"});
+  items.push({cat:"Banco / Préstamo",label:"Underwriting Fee",amount:650,note:"Estimado fijo"});
+  items.push({cat:"Prepagados (Escrow)",label:"Seguro de Hogar Prepagado (2 meses)",amount:precio*0.0055/12*2,note:"~0.55%/año × 2 meses"});
+  items.push({cat:"Prepagados (Escrow)",label:"CRIM Prepagado (2 meses)",amount:precio*0.0083/12*2,note:"~1% anual × 2 meses"});
+  if (tipoH==="FHA")  items.push({cat:"Seguro Gubernamental",label:"FHA Upfront MIP (UFMIP)",amount:hipoteca*0.0175,note:"1.75% — puede financiarse"});
+  if (tipoH==="VA")   items.push({cat:"Seguro Gubernamental",label:"VA Funding Fee",amount:hipoteca*0.0215,note:"2.15% primera vez"});
+  if (tipoH==="USDA") items.push({cat:"Seguro Gubernamental",label:"USDA Guarantee Fee",amount:hipoteca*0.01,note:"1% del préstamo"});
+  return {items, total:items.reduce((s,i)=>s+i.amount,0)};
 }
 
-const baseInp = { background: "#0d0d18", border: "1px solid #252535", borderRadius: 7, color: "#e0e0f0", fontSize: 14, padding: "9px 10px", width: "100%", outline: "none", fontFamily: "monospace", fontWeight: 600, boxSizing: "border-box" };
-const lblStyle = { fontSize: 10, color: "#6a6a8a", letterSpacing: "0.09em", textTransform: "uppercase", display: "block", marginBottom: 5 };
+const catColors = {"Legal & Notarial":"#a78bfa","Gobierno PR":"#f59e0b","Título & Seguro":"#60a5fa","Banco / Préstamo":"#34d399","Prepagados (Escrow)":"#fb923c","Seguro Gubernamental":"#f87171"};
+const base = {background:"#0d0d18",border:"1px solid #252535",borderRadius:7,color:"#e0e0f0",fontSize:14,padding:"9px 10px",width:"100%",outline:"none",fontFamily:"monospace",fontWeight:600,boxSizing:"border-box"};
+const lbl = {fontSize:10,color:"#6a6a8a",letterSpacing:"0.09em",textTransform:"uppercase",display:"block",marginBottom:5};
 
-function Field({ label, val, set, pre = "$", suf = "", note, small }) {
+function Field({label,val,set,pre="$",suf="",note,small}) {
   return (
-    <div style={{ marginBottom: small ? 8 : 12 }}>
-      <label style={lblStyle}>{label}{note && <span style={{ color: "#f59e0b", marginLeft: 5, fontSize: 9 }}>★ {note}</span>}</label>
-      <div style={{ display: "flex", alignItems: "center", background: "#0d0d18", border: "1px solid #252535", borderRadius: 7, overflow: "hidden" }}>
-        {pre && <span style={{ padding: "0 8px", color: "#454565", fontSize: 12 }}>{pre}</span>}
-        <input type="number" value={val} onChange={e => set && set(parseFloat(e.target.value) || 0)}
-          style={{ ...baseInp, border: "none", borderRadius: 0, padding: "9px 6px" }} />
-        {suf && <span style={{ padding: "0 8px", color: "#454565", fontSize: 12 }}>{suf}</span>}
+    <div style={{marginBottom:small?8:12}}>
+      <label style={lbl}>{label}{note&&<span style={{color:"#f59e0b",marginLeft:5,fontSize:9}}>★ {note}</span>}</label>
+      <div style={{display:"flex",alignItems:"center",background:"#0d0d18",border:"1px solid #252535",borderRadius:7,overflow:"hidden"}}>
+        {pre&&<span style={{padding:"0 8px",color:"#454565",fontSize:12}}>{pre}</span>}
+        <input type="number" value={val} onChange={e=>set&&set(parseFloat(e.target.value)||0)}
+          style={{...base,border:"none",borderRadius:0,padding:"9px 6px"}} />
+        {suf&&<span style={{padding:"0 8px",color:"#454565",fontSize:12}}>{suf}</span>}
       </div>
     </div>
   );
 }
 
-function StatBox({ label, val, color }) {
+function EField({label,val,set,color="#e0e0f0",note}) {
   return (
-    <div style={{ background: "#0a0a12", border: `1px solid ${color}25`, borderRadius: 8, padding: "8px 10px" }}>
-      <p style={{ fontSize: 8, color: "#4a4a6a", marginBottom: 3, letterSpacing: "0.08em", textTransform: "uppercase" }}>{label}</p>
-      <p style={{ fontSize: 12, fontWeight: 800, color }}>{val}</p>
+    <div style={{background:"#0a0a12",borderRadius:8,padding:"10px 12px"}}>
+      <p style={{fontSize:8,color:"#4a4a6a",marginBottom:4,textTransform:"uppercase"}}>{label} {note&&<span style={{color:"#3a3a5a"}}>— {note}</span>}</p>
+      <div style={{display:"flex",background:"#07070f",border:`1px solid ${color}30`,borderRadius:6,alignItems:"center",overflow:"hidden"}}>
+        <span style={{padding:"0 6px",color:"#3a3a5a",fontSize:11}}>$</span>
+        <input type="number" value={val} onChange={e=>set(parseFloat(e.target.value)||0)}
+          style={{background:"transparent",border:"none",outline:"none",color,fontSize:14,padding:"7px 4px",width:"100%",fontFamily:"monospace",fontWeight:700}} />
+      </div>
     </div>
   );
 }
 
-function Card({ label, val, sub, color = "#f59e0b", badge, size = "md" }) {
+function SBox({label,val,color}) {
   return (
-    <div style={{ background: "#0d0d18", border: `1px solid ${color}30`, borderRadius: 12, padding: size === "lg" ? "18px 20px" : "13px 15px", flex: 1 }}>
-      <p style={{ fontSize: 9, color: "#5a5a7a", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>{label}</p>
-      <p style={{ fontSize: size === "lg" ? 22 : 18, fontWeight: 900, color, fontFamily: "monospace", lineHeight: 1 }}>{val}</p>
-      {sub && <p style={{ fontSize: 10, color: "#4a4a6a", marginTop: 5 }}>{sub}</p>}
-      {badge && <span style={{ display: "inline-block", marginTop: 6, background: `${color}20`, color, fontSize: 9, padding: "2px 8px", borderRadius: 20 }}>{badge}</span>}
+    <div style={{background:"#0a0a12",border:`1px solid ${color}25`,borderRadius:8,padding:"8px 10px"}}>
+      <p style={{fontSize:8,color:"#4a4a6a",marginBottom:3,letterSpacing:"0.08em",textTransform:"uppercase"}}>{label}</p>
+      <p style={{fontSize:12,fontWeight:800,color}}>{val}</p>
     </div>
   );
 }
 
-function Sec({ title, icon, children }) {
+function Card({label,val,sub,color="#f59e0b",badge,size="md"}) {
   return (
-    <div style={{ marginBottom: 20 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+    <div style={{background:"#0d0d18",border:`1px solid ${color}30`,borderRadius:12,padding:size==="lg"?"18px 20px":"13px 15px",flex:1}}>
+      <p style={{fontSize:9,color:"#5a5a7a",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:6}}>{label}</p>
+      <p style={{fontSize:size==="lg"?22:18,fontWeight:900,color,fontFamily:"monospace",lineHeight:1}}>{val}</p>
+      {sub&&<p style={{fontSize:10,color:"#4a4a6a",marginTop:5}}>{sub}</p>}
+      {badge&&<span style={{display:"inline-block",marginTop:6,background:`${color}20`,color,fontSize:9,padding:"2px 8px",borderRadius:20}}>{badge}</span>}
+    </div>
+  );
+}
+
+function Sec({title,icon,children}) {
+  return (
+    <div style={{marginBottom:20}}>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
         <span>{icon}</span>
-        <span style={{ fontSize: 11, color: "#b0b0d0", letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: 700 }}>{title}</span>
-        <div style={{ flex: 1, height: 1, background: "#1e1e2e" }} />
+        <span style={{fontSize:11,color:"#b0b0d0",letterSpacing:"0.12em",textTransform:"uppercase",fontWeight:700}}>{title}</span>
+        <div style={{flex:1,height:1,background:"#1e1e2e"}} />
       </div>
       {children}
     </div>
   );
 }
 
-function ERow({ label, val, set, pct, pr }) {
+function ERow({label,val,set,pct,pr}) {
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 95px 55px", gap: 6, marginBottom: 7, alignItems: "center" }}>
-      <span style={{ fontSize: 11, color: "#6a6a8a" }}>{label}{pr && <span style={{ color: "#f59e0b", fontSize: 9, marginLeft: 4 }}>PR</span>}</span>
-      <div style={{ display: "flex", background: "#0a0a14", border: "1px solid #1e1e2e", borderRadius: 6, alignItems: "center" }}>
-        <span style={{ padding: "0 5px", color: "#3a3a5a", fontSize: 11 }}>$</span>
-        <input type="number" value={val} onChange={e => set(parseFloat(e.target.value) || 0)}
-          style={{ background: "transparent", border: "none", outline: "none", color: "#c8c8e8", fontSize: 12, padding: "6px 3px", width: "100%", fontFamily: "monospace" }} />
+    <div style={{display:"grid",gridTemplateColumns:"1fr 95px 55px",gap:6,marginBottom:7,alignItems:"center"}}>
+      <span style={{fontSize:11,color:"#6a6a8a"}}>{label}{pr&&<span style={{color:"#f59e0b",fontSize:9,marginLeft:4}}>PR</span>}</span>
+      <div style={{display:"flex",background:"#0a0a14",border:"1px solid #1e1e2e",borderRadius:6,alignItems:"center"}}>
+        <span style={{padding:"0 5px",color:"#3a3a5a",fontSize:11}}>$</span>
+        <input type="number" value={val} onChange={e=>set(parseFloat(e.target.value)||0)}
+          style={{background:"transparent",border:"none",outline:"none",color:"#c8c8e8",fontSize:12,padding:"6px 3px",width:"100%",fontFamily:"monospace"}} />
       </div>
-      <div style={{ background: "#080810", border: "1px solid #1a1a2a", borderRadius: 6, padding: "6px 4px", textAlign: "center" }}>
-        <span style={{ fontSize: 9, color: "#4a4a6a" }}>{(pct || 0).toFixed(1)}%</span>
+      <div style={{background:"#080810",border:"1px solid #1a1a2a",borderRadius:6,padding:"6px 4px",textAlign:"center"}}>
+        <span style={{fontSize:9,color:"#4a4a6a"}}>{(pct||0).toFixed(1)}%</span>
       </div>
     </div>
   );
 }
 
-const catColors = { "Legal & Notarial": "#a78bfa", "Gobierno PR": "#f59e0b", "Título & Seguro": "#60a5fa", "Banco / Préstamo": "#34d399", "Prepagados (Escrow)": "#fb923c", "Seguro Gubernamental": "#f87171" };
-
 function App() {
   const [tab, setTab] = useState("data");
+  // Compra
   const [precio, setPrecio] = useState(0);
   const [pronto, setPronto] = useState(0);
   const [plazo, setPlazo] = useState(0);
@@ -140,10 +150,12 @@ function App() {
   const [reparaciones, setReparaciones] = useState(0);
   const [mesCompra, setMesCompra] = useState(0);
   const [anoCompra, setAnoCompra] = useState(0);
+  // Ingresos
   const [renta1, setRenta1] = useState(0);
   const [renta2, setRenta2] = useState(0);
   const [renta3, setRenta3] = useState(0);
   const [units, setUnits] = useState(1);
+  // Gastos
   const [crim, setCrim] = useState(0);
   const [seguro, setSeguro] = useState(0);
   const [huracan, setHuracan] = useState(0);
@@ -158,216 +170,213 @@ function App() {
   const [mant, setMant] = useState(0);
   const [vacancia, setVacancia] = useState(0);
   const [extra, setExtra] = useState(0);
+  // Renta vs Venta
   const [precioVenta, setPrecioVenta] = useState(0);
-  const [comisionAgente, setComisionAgente] = useState(0);
-  const [cierreVentaDlr, setCierreVentaDlr] = useState(0);
-  const [deudaHipoteca, setDeudaHipoteca] = useState(0);
+  const [comision, setComision] = useState(0);
+  const [cierreVenta, setCierreVenta] = useState(0);
+  const [deudaH, setDeudaH] = useState(0);
   const [apreciacion, setApreciacion] = useState(0);
-  const [horizonte, setHorizonte] = useState(0);
-
-  // ── ESCROW EDITABLES (PITI) ──
-  const [escrowSeguroHogarEdit, setEscrowSeguroHogarEdit] = useState(0);
-  const [escrowCRIMEdit, setEscrowCRIMEdit] = useState(0);
-  const [escrowHuracanEdit, setEscrowHuracanEdit] = useState(0);
-  const [escrowInundacionEdit, setEscrowInundacionEdit] = useState(0);
-  const [escrowMIPEdit, setEscrowMIPEdit] = useState(0);
-
+  const [horizonte, setHorizonte] = useState(5);
+  // PITI editables (0 = usar estimado PR)
+  const [eHogar, setEHogar] = useState(0);
+  const [eCRIM, setECRIM] = useState(0);
+  const [eHuracan, setEHuracan] = useState(0);
+  const [eInundacion, setEInundacion] = useState(0);
+  const [eMIP, setEMIP] = useState(0);
+  // Guardados
   const [saved, setSaved] = useState([]);
   const [propName, setPropName] = useState("Mi Propiedad");
 
   const c = useMemo(() => {
     const prontoDlr = precio * pronto / 100;
-    const hipoteca = precio - prontoDlr;
-    const cc = calcClosingCosts(precio, prontoDlr, hipoteca, tipoH);
+    const hipoteca  = precio - prontoDlr;
+    const cc        = calcCC(precio, hipoteca, tipoH);
     const capitalTotal = prontoDlr + cc.total + reparaciones;
-    const pAndI = calcPI(hipoteca, tasa, plazo);
-    const pmiMonthly = (tipoH === "Convencional" && pronto < 20) ? hipoteca * 0.0055 / 12 : 0;
-    const fhaMipMonthly = tipoH === "FHA" ? hipoteca * 0.0055 / 12 : 0;
-    const usdaMonthly = tipoH === "USDA" ? hipoteca * 0.0035 / 12 : 0;
+    const pAndI     = calcPI(hipoteca, tasa, plazo);
+    const pmi       = tipoH==="Convencional" && pronto<20 ? hipoteca*0.0055/12 : 0;
+    const mip       = tipoH==="FHA"  ? hipoteca*0.0055/12 : 0;
+    const usda      = tipoH==="USDA" ? hipoteca*0.0035/12 : 0;
+    // PITI escrow — usa editado si >0, sino estimado realidad PR
+    const escHogar     = eHogar     > 0 ? eHogar     : Math.round(precio*0.011/12);   // midpoint $80-$150
+    const escCRIM      = eCRIM      > 0 ? eCRIM      : Math.round(precio*0.0095/12);  // midpoint $80-$120
+    const escHuracan   = eHuracan   > 0 ? eHuracan   : Math.round(precio*0.0286/12);  // midpoint $200-$400
+    const escInundacion= eInundacion> 0 ? eInundacion: Math.round(precio*0.01/12);    // midpoint $60-$150
+    const escMIP       = eMIP       > 0 ? eMIP       : mip + pmi + usda;
+    const pagoTotal    = pAndI + escHogar + escCRIM + escHuracan + escInundacion + escMIP;
 
-    // Escrow: usa valor editado si > 0, si no usa promedio real de PR
-    const escrowSeguroHogar = escrowSeguroHogarEdit > 0 ? escrowSeguroHogarEdit : Math.round(precio * 0.011 / 12);  // ~$115 en $126k → midpoint $80-$150
-    const escrowCRIM        = escrowCRIMEdit > 0        ? escrowCRIMEdit        : Math.round(precio * 0.0095 / 12); // ~$100 en $126k → midpoint $80-$120
-    const escrowHuracan     = escrowHuracanEdit > 0     ? escrowHuracanEdit     : Math.round(precio * 0.0286 / 12); // ~$300 en $126k → midpoint $200-$400
-    const escrowInundacion  = escrowInundacionEdit > 0  ? escrowInundacionEdit  : Math.round(precio * 0.01 / 12);   // ~$105 en $126k → midpoint $60-$150
-    const escrowMIP         = escrowMIPEdit > 0         ? escrowMIPEdit         : fhaMipMonthly + pmiMonthly + usdaMonthly;
-    const pagoTotalMensual  = pAndI + escrowSeguroHogar + escrowCRIM + escrowHuracan + escrowInundacion + escrowMIP;
     const rentaBruta = renta1 + renta2 + renta3;
     const rentaAnual = rentaBruta * 12;
-    const gastos = crim + seguro + huracan + inundacion + hoa + pmiMonthly + fhaMipMonthly + usdaMonthly + agua + elec + internet + basura + jardineria + admin + mant + vacancia + extra;
-    const noim = rentaBruta - gastos;
-    const noia = noim * 12;
-    const capRate = precio > 0 ? noia / precio * 100 : 0;
-    const cfm = noim - pAndI;
-    const cfa = cfm * 12;
-    const coc = capitalTotal > 0 ? cfa / capitalTotal * 100 : 0;
-    const pctGastos = rentaBruta > 0 ? gastos / rentaBruta * 100 : 0;
-    const dscr = pAndI > 0 ? noim / pAndI : 0;
-    const grm = rentaAnual > 0 ? precio / rentaAnual : 0;
-    const r50 = gastos <= rentaBruta * 0.5;
-    const r1 = rentaBruta >= precio * 0.01;
-    const p = (v) => rentaBruta > 0 ? v / rentaBruta * 100 : 0;
-    let balanceRestante = hipoteca;
-    let pagosMensualesRealizados = 0;
-    if (mesCompra > 0 && anoCompra > 0) {
-      const fechaInicio = new Date(anoCompra, mesCompra - 1, 1);
-      const hoy = new Date();
-      const meses = Math.max(0, (hoy.getFullYear() - fechaInicio.getFullYear()) * 12 + (hoy.getMonth() - fechaInicio.getMonth()));
-      pagosMensualesRealizados = Math.min(meses, plazo * 12);
-      const r = tasa / 100 / 12;
-      const n = plazo * 12;
-      if (r > 0 && pagosMensualesRealizados > 0) {
-        balanceRestante = Math.max(hipoteca * (Math.pow(1 + r, n) - Math.pow(1 + r, pagosMensualesRealizados)) / (Math.pow(1 + r, n) - 1), 0);
-      }
-    }
-    const tieneHistorial = mesCompra > 0 && anoCompra > 0;
-    const equityAcumulado = hipoteca - balanceRestante;
-    return { prontoDlr, hipoteca, capitalTotal, pAndI, pagoTotalMensual, escrowSeguroHogar, escrowCRIM, escrowHuracan, escrowInundacion, escrowMIP, pmiMonthly, fhaMipMonthly, usdaMonthly, rentaBruta, rentaAnual, gastos, gastosAnual: gastos * 12, noim, noia, capRate, cfm, cfa, coc, pctGastos, dscr, grm, r50, r1, p, cc, cierreDlr: cc.total, balanceRestante, pagosMensualesRealizados, tieneHistorial, equityAcumulado };
-  }, [precio, pronto, plazo, tasa, tipoH, reparaciones, mesCompra, anoCompra, escrowSeguroHogarEdit, escrowCRIMEdit, escrowHuracanEdit, escrowInundacionEdit, escrowMIPEdit, renta1, renta2, renta3, crim, seguro, huracan, inundacion, hoa, agua, elec, internet, basura, jardineria, admin, mant, vacancia, extra]);
-  }, [precio, pronto, plazo, tasa, tipoH, reparaciones, mesCompra, anoCompra, renta1, renta2, renta3, crim, seguro, huracan, inundacion, hoa, agua, elec, internet, basura, jardineria, admin, mant, vacancia, extra]);
+    const gastos  = crim+seguro+huracan+inundacion+hoa+pmi+mip+usda+agua+elec+internet+basura+jardineria+admin+mant+vacancia+extra;
+    const noim    = rentaBruta - gastos;
+    const noia    = noim * 12;
+    const capRate = precio>0 ? noia/precio*100 : 0;
+    const cfm     = noim - pAndI;
+    const cfa     = cfm * 12;
+    const coc     = capitalTotal>0 ? cfa/capitalTotal*100 : 0;
+    const pctG    = rentaBruta>0 ? gastos/rentaBruta*100 : 0;
+    const dscr    = pAndI>0 ? noim/pAndI : 0;
+    const grm     = rentaAnual>0 ? precio/rentaAnual : 0;
+    const p       = v => rentaBruta>0 ? v/rentaBruta*100 : 0;
 
-  useEffect(() => { setDeudaHipoteca(Math.round(c.balanceRestante)); }, [c.balanceRestante]);
-  useEffect(() => { setCierreVentaDlr(Math.round(c.cc.total)); }, [c.cc.total]);
+    let balRest = hipoteca, pagosReal = 0;
+    if (mesCompra>0 && anoCompra>0) {
+      const inicio = new Date(anoCompra, mesCompra-1, 1);
+      const hoy    = new Date();
+      const meses  = Math.max(0,(hoy.getFullYear()-inicio.getFullYear())*12+(hoy.getMonth()-inicio.getMonth()));
+      pagosReal = Math.min(meses, plazo*12);
+      const r=tasa/100/12, n=plazo*12;
+      if (r>0 && pagosReal>0) balRest = Math.max(hipoteca*(Math.pow(1+r,n)-Math.pow(1+r,pagosReal))/(Math.pow(1+r,n)-1),0);
+    }
+    const tieneH = mesCompra>0 && anoCompra>0;
+    return {
+      prontoDlr, hipoteca, capitalTotal, pAndI, pmi, mip, usda,
+      pagoTotal, escHogar, escCRIM, escHuracan, escInundacion, escMIP,
+      rentaBruta, rentaAnual, gastos, noim, noia, capRate, cfm, cfa, coc,
+      pctG, dscr, grm, p, cc,
+      r50: gastos<=rentaBruta*0.5, r1: rentaBruta>=precio*0.01,
+      balRest, pagosReal, tieneH, equity: hipoteca-balRest,
+    };
+  }, [precio,pronto,plazo,tasa,tipoH,reparaciones,mesCompra,anoCompra,eHogar,eCRIM,eHuracan,eInundacion,eMIP,renta1,renta2,renta3,crim,seguro,huracan,inundacion,hoa,agua,elec,internet,basura,jardineria,admin,mant,vacancia,extra]);
+
+  useEffect(() => { setDeudaH(Math.round(c.balRest)); }, [c.balRest]);
+  useEffect(() => { setCierreVenta(Math.round(c.cc.total)); }, [c.cc.total]);
 
   const rv = useMemo(() => {
-    const comisionDlr = precioVenta * comisionAgente / 100;
-    const gananciaNetaHoy = precioVenta - comisionDlr - cierreVentaDlr - deudaHipoteca;
-    const r = tasa / 100 / 12;
-    let balance = c.balanceRestante;
-    let cumCF = 0, cumEquity = 0;
-    const yearlyData = [];
-    for (let yr = 1; yr <= Math.max(horizonte, 1); yr++) {
-      for (let m = 0; m < 12; m++) {
-        const interest = balance * r;
-        const principal = Math.max(c.pAndI - interest, 0);
-        cumEquity += principal;
-        balance = Math.max(balance - principal, 0);
-        cumCF += c.cfm;
+    const comDlr = precioVenta * comision / 100;
+    const ganHoy = precioVenta - comDlr - cierreVenta - deudaH;
+    const r = tasa/100/12;
+    let bal = c.balRest, cumCF=0, cumEq=0;
+    const rows = [];
+    for (let yr=1; yr<=Math.max(horizonte,1); yr++) {
+      for (let m=0; m<12; m++) {
+        const int = bal*r;
+        const pri = Math.max(c.pAndI-int,0);
+        cumEq += pri; bal = Math.max(bal-pri,0); cumCF += c.cfm;
       }
-      const valorAño = precio * Math.pow(1 + apreciacion / 100, yr);
-      const gananciaVenta = valorAño - (valorAño * comisionAgente / 100) - cierreVentaDlr - balance;
-      yearlyData.push({ yr, cumCF: Math.round(cumCF), cumEquity: Math.round(cumEquity), valorAño: Math.round(valorAño), balance: Math.round(balance), gananciaVenta: Math.round(gananciaVenta), totalRenta: Math.round(cumCF + cumEquity + (valorAño - precio)) });
+      const vAño = precio*Math.pow(1+apreciacion/100,yr);
+      const gV   = vAño - (vAño*comision/100) - cierreVenta - bal;
+      rows.push({yr, cumCF:Math.round(cumCF), cumEq:Math.round(cumEq), vAño:Math.round(vAño), bal:Math.round(bal), gV:Math.round(gV), totR:Math.round(cumCF+cumEq+(vAño-precio))});
     }
-    const last = yearlyData[yearlyData.length - 1] || {};
-    const winner = (last.totalRenta || 0) >= (last.gananciaVenta || 0) ? "renta" : "venta";
-    return { comisionDlr, gananciaNetaHoy, yearlyData, totalReturnRenta: last.totalRenta || 0, totalReturnVenta: last.gananciaVenta || 0, winner, last };
-  }, [precioVenta, comisionAgente, cierreVentaDlr, deudaHipoteca, apreciacion, horizonte, c, precio, tasa]);
+    const last = rows[rows.length-1]||{};
+    return {comDlr, ganHoy, rows, last, totR:last.totR||0, totV:last.gV||0, winner:(last.totR||0)>=(last.gV||0)?"renta":"venta"};
+  }, [precioVenta,comision,cierreVenta,deudaH,apreciacion,horizonte,c,precio,tasa]);
 
-  const sc = (v) => v >= 10 ? "#22c55e" : v >= 5 ? "#f59e0b" : "#ef4444";
-  const cfColor = c.cfm >= 0 ? "#22c55e" : "#ef4444";
-  const hNotes = { Convencional: "≥20% evita PMI. Sin seguro gubernamental.", FHA: "Mín 3.5% pronto. MIP 1.75% upfront + 0.55%/año.", VA: "Sin pronto. Solo veteranos. Sin PMI mensual.", USDA: "Zonas rurales PR. 0% pronto. Guarantee fee 1%." };
-  const tabs = [{ id: "data", label: "🏠 Data de Propiedad" }, { id: "rentaventa", label: "⚖️ Renta vs Venta" }, { id: "comparar", label: `💾 Guardados (${saved.length})` }, { id: "guia", label: "📋 Guía PR" }];
-  const ccByCategory = useMemo(() => { const g = {}; c.cc.items.forEach(i => { if (!g[i.cat]) g[i.cat] = []; g[i.cat].push(i); }); return g; }, [c.cc.items]);
+  const sc = v => v>=10?"#22c55e":v>=5?"#f59e0b":"#ef4444";
+  const cfCol = c.cfm>=0?"#22c55e":"#ef4444";
+  const hNotes = {Convencional:"≥20% evita PMI. Sin seguro gubernamental.",FHA:"Mín 3.5% pronto. MIP 1.75% upfront + 0.55%/año.",VA:"Sin pronto. Solo veteranos. Sin PMI.",USDA:"Zonas rurales PR. 0% pronto. Guarantee fee 1%."};
+  const tabs = [{id:"data",label:"🏠 Data de Propiedad"},{id:"rv",label:"⚖️ Renta vs Venta"},{id:"saved",label:`💾 Guardados (${saved.length})`},{id:"guia",label:"📋 Guía PR"}];
+  const ccByCat = useMemo(()=>{ const g={}; c.cc.items.forEach(i=>{if(!g[i.cat])g[i.cat]=[];g[i.cat].push(i);}); return g; },[c.cc.items]);
 
   return (
-    <div style={{ minHeight: "100vh", background: "#07070f", color: "#e0e0f0", fontFamily: "monospace", fontSize: 13 }}>
+    <div style={{minHeight:"100vh",background:"#07070f",color:"#e0e0f0",fontFamily:"monospace",fontSize:13}}>
+
       {/* HEADER */}
-      <div style={{ background: "#0c0c18", borderBottom: "1px solid #1a1a2a", padding: "14px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
+      <div style={{background:"#0c0c18",borderBottom:"1px solid #1a1a2a",padding:"14px 24px",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:10}}>
         <div>
-          <h1 style={{ fontSize: 17, fontWeight: 900, color: "#f59e0b", margin: 0 }}>🏠 PR PROPERTY ANALYZER</h1>
-          <p style={{ fontSize: 9, color: "#4a4a6a", marginTop: 2, letterSpacing: "0.1em" }}>ANÁLISIS DE INVERSIÓN · PUERTO RICO</p>
+          <h1 style={{fontSize:17,fontWeight:900,color:"#f59e0b",margin:0}}>🏠 PR PROPERTY ANALYZER</h1>
+          <p style={{fontSize:9,color:"#4a4a6a",marginTop:2,letterSpacing:"0.1em"}}>ANÁLISIS DE INVERSIÓN · PUERTO RICO</p>
         </div>
-        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <input value={propName} onChange={e => setPropName(e.target.value)} style={{ ...baseInp, width: 150, fontSize: 12, padding: "7px 12px" }} placeholder="Nombre propiedad" />
-          <button onClick={() => setSaved(s => [...s, { name: propName, precio, c, date: new Date().toLocaleDateString("es-PR") }])}
-            style={{ background: "#f59e0b", color: "#07070f", border: "none", borderRadius: 7, padding: "8px 14px", fontSize: 11, fontWeight: 900, cursor: "pointer" }}>💾 GUARDAR</button>
+        <div style={{display:"flex",gap:8,alignItems:"center"}}>
+          <input value={propName} onChange={e=>setPropName(e.target.value)} style={{...base,width:150,fontSize:12,padding:"7px 12px"}} placeholder="Nombre propiedad" />
+          <button onClick={()=>setSaved(s=>[...s,{name:propName,precio,c,date:new Date().toLocaleDateString("es-PR")}])}
+            style={{background:"#f59e0b",color:"#07070f",border:"none",borderRadius:7,padding:"8px 14px",fontSize:11,fontWeight:900,cursor:"pointer"}}>💾 GUARDAR</button>
         </div>
       </div>
 
       {/* TABS */}
-      <div style={{ borderBottom: "1px solid #1a1a2a", padding: "0 20px", display: "flex", overflowX: "auto" }}>
-        {tabs.map(t => (
-          <button key={t.id} onClick={() => setTab(t.id)}
-            style={{ background: "none", border: "none", borderBottom: `2px solid ${tab === t.id ? "#f59e0b" : "transparent"}`, color: tab === t.id ? "#f59e0b" : "#5a5a7a", padding: "11px 16px", fontSize: 11, cursor: "pointer", fontWeight: 700, letterSpacing: "0.07em", textTransform: "uppercase", whiteSpace: "nowrap" }}>
+      <div style={{borderBottom:"1px solid #1a1a2a",padding:"0 20px",display:"flex",overflowX:"auto"}}>
+        {tabs.map(t=>(
+          <button key={t.id} onClick={()=>setTab(t.id)}
+            style={{background:"none",border:"none",borderBottom:`2px solid ${tab===t.id?"#f59e0b":"transparent"}`,color:tab===t.id?"#f59e0b":"#5a5a7a",padding:"11px 16px",fontSize:11,cursor:"pointer",fontWeight:700,letterSpacing:"0.07em",textTransform:"uppercase",whiteSpace:"nowrap"}}>
             {t.label}
           </button>
         ))}
       </div>
 
       {/* ══ DATA DE PROPIEDAD ══ */}
-      {tab === "data" && (
-        <div style={{ maxWidth: 1200, margin: "0 auto", padding: 20, display: "grid", gridTemplateColumns: "320px 1fr", gap: 20 }}>
+      {tab==="data" && (
+        <div style={{maxWidth:1200,margin:"0 auto",padding:20,display:"grid",gridTemplateColumns:"320px 1fr",gap:20}}>
           <div>
             <Sec title="Información de Compra" icon="🏷️">
               <Field label="Precio de Compra" val={precio} set={setPrecio} />
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
                 <Field label="Pronto %" val={pronto} set={setPronto} pre="%" small />
-                <div style={{ marginBottom: 8 }}>
-                  <label style={lblStyle}>= Pronto $</label>
-                  <div style={{ ...baseInp, color: "#f59e0b", cursor: "default", padding: "9px 10px", background: "#08080f", border: "1px solid #1a1a28" }}>{fmt(c.prontoDlr)}</div>
+                <div style={{marginBottom:8}}>
+                  <label style={lbl}>= Pronto $</label>
+                  <div style={{...base,color:"#f59e0b",cursor:"default",padding:"9px 10px",background:"#08080f",border:"1px solid #1a1a28"}}>{fmt(c.prontoDlr)}</div>
                 </div>
               </div>
-              <div style={{ borderTop: "1px solid #1a1a2a", paddingTop: 12, marginTop: 4, marginBottom: 4 }}>
-                <p style={{ fontSize: 9, color: "#f59e0b", fontWeight: 700, letterSpacing: "0.1em", marginBottom: 8 }}>FECHA DE COMPRA <span style={{ color: "#3a3a5a", fontWeight: 400 }}>— OPCIONAL</span></p>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              <div style={{borderTop:"1px solid #1a1a2a",paddingTop:12,marginTop:4,marginBottom:4}}>
+                <p style={{fontSize:9,color:"#f59e0b",fontWeight:700,letterSpacing:"0.1em",marginBottom:8}}>FECHA DE COMPRA <span style={{color:"#3a3a5a",fontWeight:400}}>— OPCIONAL</span></p>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
                   <div>
-                    <label style={lblStyle}>Mes de Compra</label>
-                    <select value={mesCompra} onChange={e => setMesCompra(parseInt(e.target.value))} style={{ ...baseInp, padding: "9px 10px", cursor: "pointer" }}>
+                    <label style={lbl}>Mes de Compra</label>
+                    <select value={mesCompra} onChange={e=>setMesCompra(parseInt(e.target.value))} style={{...base,padding:"9px 10px",cursor:"pointer"}}>
                       <option value={0}>— No aplica —</option>
-                      {["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"].map((m, i) => <option key={i+1} value={i+1}>{m}</option>)}
+                      {["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"].map((m,i)=><option key={i+1} value={i+1}>{m}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label style={lblStyle}>Año de Compra</label>
-                    <select value={anoCompra} onChange={e => setAnoCompra(parseInt(e.target.value))} style={{ ...baseInp, padding: "9px 10px", cursor: "pointer" }}>
+                    <label style={lbl}>Año de Compra</label>
+                    <select value={anoCompra} onChange={e=>setAnoCompra(parseInt(e.target.value))} style={{...base,padding:"9px 10px",cursor:"pointer"}}>
                       <option value={0}>— No aplica —</option>
-                      {Array.from({ length: 31 }, (_, i) => 2000 + i).reverse().map(y => <option key={y} value={y}>{y}</option>)}
+                      {Array.from({length:31},(_,i)=>2000+i).reverse().map(y=><option key={y} value={y}>{y}</option>)}
                     </select>
                   </div>
                 </div>
-                {c.tieneHistorial && (
-                  <div style={{ marginTop: 10, background: "#0a0f1a", border: "1px solid #60a5fa30", borderRadius: 8, padding: "10px 12px" }}>
-                    <p style={{ fontSize: 9, color: "#5a7a9a", marginBottom: 8 }}>HISTORIAL DE PAGOS</p>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
-                      <div><p style={{ fontSize: 8, color: "#4a4a6a", marginBottom: 3 }}>PAGOS REALIZADOS</p><p style={{ fontSize: 13, fontWeight: 800, color: "#60a5fa" }}>{c.pagosMensualesRealizados} meses</p></div>
-                      <div><p style={{ fontSize: 8, color: "#4a4a6a", marginBottom: 3 }}>PAGO MENSUAL ESTIMADO</p><p style={{ fontSize: 13, fontWeight: 800, color: "#a78bfa" }}>{fmtD(c.pagoTotalMensual)}</p></div>
-                      <div><p style={{ fontSize: 8, color: "#4a4a6a", marginBottom: 3 }}>EQUITY ACUMULADO</p><p style={{ fontSize: 13, fontWeight: 800, color: "#22c55e" }}>{fmt(c.equityAcumulado)}</p></div>
-                      <div><p style={{ fontSize: 8, color: "#4a4a6a", marginBottom: 3 }}>BALANCE PENDIENTE</p><p style={{ fontSize: 13, fontWeight: 800, color: "#f87171" }}>{fmt(c.balanceRestante)}</p></div>
+                {c.tieneH && (
+                  <div style={{marginTop:10,background:"#0a0f1a",border:"1px solid #60a5fa30",borderRadius:8,padding:"10px 12px"}}>
+                    <p style={{fontSize:9,color:"#5a7a9a",marginBottom:8}}>HISTORIAL DE PAGOS</p>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+                      <div><p style={{fontSize:8,color:"#4a4a6a",marginBottom:3}}>PAGOS REALIZADOS</p><p style={{fontSize:13,fontWeight:800,color:"#60a5fa"}}>{c.pagosReal} meses</p></div>
+                      <div><p style={{fontSize:8,color:"#4a4a6a",marginBottom:3}}>PAGO MENSUAL EST.</p><p style={{fontSize:13,fontWeight:800,color:"#a78bfa"}}>{fmtD(c.pagoTotal)}</p></div>
+                      <div><p style={{fontSize:8,color:"#4a4a6a",marginBottom:3}}>EQUITY ACUMULADO</p><p style={{fontSize:13,fontWeight:800,color:"#22c55e"}}>{fmt(c.equity)}</p></div>
+                      <div><p style={{fontSize:8,color:"#4a4a6a",marginBottom:3}}>BALANCE PENDIENTE</p><p style={{fontSize:13,fontWeight:800,color:"#f87171"}}>{fmt(c.balRest)}</p></div>
                     </div>
                   </div>
                 )}
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6, marginTop: 8 }}>
-                <StatBox label="HIPOTECA ORIGINAL" val={fmt(c.hipoteca)} color="#60a5fa" />
-                <StatBox label="PAGO MENSUAL EST." val={fmtD(c.pagoTotalMensual)} color="#a78bfa" />
-                <StatBox label="CAPITAL TOTAL" val={fmt(c.capitalTotal)} color="#f59e0b" />
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginTop:8}}>
+                <SBox label="HIPOTECA ORIGINAL" val={fmt(c.hipoteca)} color="#60a5fa" />
+                <SBox label="PAGO MENSUAL EST." val={fmtD(c.pagoTotal)} color="#a78bfa" />
+                <SBox label="CAPITAL TOTAL" val={fmt(c.capitalTotal)} color="#f59e0b" />
               </div>
             </Sec>
 
             <Sec title="Financiamiento" icon="🏦">
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
                 <Field label="Plazo (años)" val={plazo} set={setPlazo} pre="" small />
                 <Field label="Tasa Interés %" val={tasa} set={setTasa} pre="%" small />
               </div>
-              <label style={lblStyle}>Tipo de Préstamo</label>
-              <div style={{ display: "flex", gap: 5, marginBottom: 8, flexWrap: "wrap" }}>
-                {["Convencional","FHA","VA","USDA"].map(t => (
-                  <button key={t} onClick={() => setTipoH(t)} style={{ background: tipoH === t ? "#f59e0b" : "#0d0d18", color: tipoH === t ? "#07070f" : "#6a6a9a", border: `1px solid ${tipoH === t ? "#f59e0b" : "#252535"}`, borderRadius: 6, padding: "5px 10px", fontSize: 11, cursor: "pointer", fontWeight: 700 }}>{t}</button>
+              <label style={lbl}>Tipo de Préstamo</label>
+              <div style={{display:"flex",gap:5,marginBottom:8,flexWrap:"wrap"}}>
+                {["Convencional","FHA","VA","USDA"].map(t=>(
+                  <button key={t} onClick={()=>setTipoH(t)} style={{background:tipoH===t?"#f59e0b":"#0d0d18",color:tipoH===t?"#07070f":"#6a6a9a",border:`1px solid ${tipoH===t?"#f59e0b":"#252535"}`,borderRadius:6,padding:"5px 10px",fontSize:11,cursor:"pointer",fontWeight:700}}>{t}</button>
                 ))}
               </div>
-              <p style={{ fontSize: 10, color: "#4a5568", background: "#0a0a14", borderRadius: 6, padding: "7px 10px" }}>{hNotes[tipoH]}</p>
+              <p style={{fontSize:10,color:"#4a5568",background:"#0a0a14",borderRadius:6,padding:"7px 10px"}}>{hNotes[tipoH]}</p>
             </Sec>
 
             <Sec title="Reparaciones Estimadas" icon="🔧">
               <Field label="Costo de Reparaciones" val={reparaciones} set={setReparaciones} note="Impacta el capital total" />
-              {reparaciones > 0 && <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}><StatBox label="REPARACIONES" val={fmt(reparaciones)} color="#fb923c" /><StatBox label="CAPITAL TOTAL" val={fmt(c.capitalTotal)} color="#f59e0b" /></div>}
+              {reparaciones>0 && <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}><SBox label="REPARACIONES" val={fmt(reparaciones)} color="#fb923c" /><SBox label="CAPITAL TOTAL" val={fmt(c.capitalTotal)} color="#f59e0b" /></div>}
             </Sec>
 
             <Sec title="Gastos Mensuales" icon="📊">
-              <p style={{ fontSize: 9, color: "#f59e0b", marginBottom: 8, fontWeight: 700 }}>IMPUESTOS & SEGUROS</p>
+              <p style={{fontSize:9,color:"#f59e0b",marginBottom:8,fontWeight:700}}>IMPUESTOS & SEGUROS</p>
               <ERow label="CRIM / Contribuciones" val={crim} set={setCrim} pct={c.p(crim)} pr />
               <ERow label="Seguro Hazard" val={seguro} set={setSeguro} pct={c.p(seguro)} />
               <ERow label="Seguro Huracán" val={huracan} set={setHuracan} pct={c.p(huracan)} pr />
               <ERow label="Seguro Inundación NFIP" val={inundacion} set={setInundacion} pct={c.p(inundacion)} pr />
               <ERow label="HOA" val={hoa} set={setHoa} pct={c.p(hoa)} />
-              {c.pmiMonthly > 0 && <div style={{ display:"flex", justifyContent:"space-between", background:"#0a0a14", borderRadius:6, padding:"7px 10px", marginBottom:7 }}><span style={{fontSize:11,color:"#f59e0b"}}>PMI (auto)</span><span style={{fontSize:11,fontWeight:700,color:"#f59e0b"}}>{fmtD(c.pmiMonthly)}</span></div>}
-              {c.fhaMipMonthly > 0 && <div style={{ display:"flex", justifyContent:"space-between", background:"#0a0a14", borderRadius:6, padding:"7px 10px", marginBottom:7 }}><span style={{fontSize:11,color:"#f87171"}}>FHA MIP (auto)</span><span style={{fontSize:11,fontWeight:700,color:"#f87171"}}>{fmtD(c.fhaMipMonthly)}</span></div>}
-              {c.usdaMonthly > 0 && <div style={{ display:"flex", justifyContent:"space-between", background:"#0a0a14", borderRadius:6, padding:"7px 10px", marginBottom:7 }}><span style={{fontSize:11,color:"#f87171"}}>USDA Fee (auto)</span><span style={{fontSize:11,fontWeight:700,color:"#f87171"}}>{fmtD(c.usdaMonthly)}</span></div>}
-              <p style={{ fontSize: 9, color: "#f59e0b", marginTop: 10, marginBottom: 8, fontWeight: 700 }}>UTILIDADES</p>
+              {c.pmi>0 && <div style={{display:"flex",justifyContent:"space-between",background:"#0a0a14",borderRadius:6,padding:"7px 10px",marginBottom:7}}><span style={{fontSize:11,color:"#f59e0b"}}>PMI (auto)</span><span style={{fontSize:11,fontWeight:700,color:"#f59e0b"}}>{fmtD(c.pmi)}</span></div>}
+              {c.mip>0 && <div style={{display:"flex",justifyContent:"space-between",background:"#0a0a14",borderRadius:6,padding:"7px 10px",marginBottom:7}}><span style={{fontSize:11,color:"#f87171"}}>FHA MIP (auto)</span><span style={{fontSize:11,fontWeight:700,color:"#f87171"}}>{fmtD(c.mip)}</span></div>}
+              {c.usda>0 && <div style={{display:"flex",justifyContent:"space-between",background:"#0a0a14",borderRadius:6,padding:"7px 10px",marginBottom:7}}><span style={{fontSize:11,color:"#f87171"}}>USDA Fee (auto)</span><span style={{fontSize:11,fontWeight:700,color:"#f87171"}}>{fmtD(c.usda)}</span></div>}
+              <p style={{fontSize:9,color:"#f59e0b",marginTop:10,marginBottom:8,fontWeight:700}}>UTILIDADES</p>
               <ERow label="Agua / Alcantarillado" val={agua} set={setAgua} pct={c.p(agua)} />
               <ERow label="Gas / Electricidad" val={elec} set={setElec} pct={c.p(elec)} />
               <ERow label="Internet" val={internet} set={setInternet} pct={c.p(internet)} />
-              <p style={{ fontSize: 9, color: "#f59e0b", marginTop: 10, marginBottom: 8, fontWeight: 700 }}>OPERACIÓN</p>
+              <p style={{fontSize:9,color:"#f59e0b",marginTop:10,marginBottom:8,fontWeight:700}}>OPERACIÓN</p>
               <ERow label="Basura" val={basura} set={setBasura} pct={c.p(basura)} />
               <ERow label="Jardinería" val={jardineria} set={setJardineria} pct={c.p(jardineria)} />
               <ERow label="Administración PM" val={admin} set={setAdmin} pct={c.p(admin)} />
@@ -377,36 +386,36 @@ function App() {
             </Sec>
           </div>
 
-          {/* RIGHT: Closing Costs */}
+          {/* RIGHT: Costos de Cierre */}
           <div>
             <Sec title="Costos de Cierre — Auto-calculado (Puerto Rico)" icon="📄">
-              <div style={{ background: "#080c08", border: "2px solid #f59e0b30", borderRadius: 14, overflow: "hidden" }}>
-                <div style={{ background: "#0f120a", borderBottom: "1px solid #2a2a1a", padding: "16px 20px", display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
-                  <div><p style={{ fontSize: 9, color: "#5a5a7a", marginBottom: 4 }}>TOTAL COSTOS DE CIERRE</p><p style={{ fontSize: 22, fontWeight: 900, color: "#f59e0b" }}>{fmt(c.cc.total)}</p></div>
-                  <div><p style={{ fontSize: 9, color: "#5a5a7a", marginBottom: 4 }}>% DEL PRECIO</p><p style={{ fontSize: 22, fontWeight: 900, color: "#c084fc" }}>{fmtPct(c.cc.total / precio * 100)}</p></div>
-                  <div><p style={{ fontSize: 9, color: "#5a5a7a", marginBottom: 4 }}>PRONTO</p><p style={{ fontSize: 22, fontWeight: 900, color: "#60a5fa" }}>{fmt(c.prontoDlr)}</p></div>
-                  <div><p style={{ fontSize: 9, color: "#5a5a7a", marginBottom: 4 }}>CAPITAL TOTAL NECESARIO</p><p style={{ fontSize: 22, fontWeight: 900, color: "#22c55e" }}>{fmt(c.capitalTotal)}</p><p style={{ fontSize: 9, color: "#4a6a4a", marginTop: 2 }}>Pronto + Cierre + Reparaciones</p></div>
+              <div style={{background:"#080c08",border:"2px solid #f59e0b30",borderRadius:14,overflow:"hidden"}}>
+                <div style={{background:"#0f120a",borderBottom:"1px solid #2a2a1a",padding:"16px 20px",display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12}}>
+                  <div><p style={{fontSize:9,color:"#5a5a7a",marginBottom:4}}>TOTAL COSTOS DE CIERRE</p><p style={{fontSize:22,fontWeight:900,color:"#f59e0b"}}>{fmt(c.cc.total)}</p></div>
+                  <div><p style={{fontSize:9,color:"#5a5a7a",marginBottom:4}}>% DEL PRECIO</p><p style={{fontSize:22,fontWeight:900,color:"#c084fc"}}>{fmtPct(c.cc.total/precio*100)}</p></div>
+                  <div><p style={{fontSize:9,color:"#5a5a7a",marginBottom:4}}>PRONTO</p><p style={{fontSize:22,fontWeight:900,color:"#60a5fa"}}>{fmt(c.prontoDlr)}</p></div>
+                  <div><p style={{fontSize:9,color:"#5a5a7a",marginBottom:4}}>CAPITAL TOTAL NECESARIO</p><p style={{fontSize:22,fontWeight:900,color:"#22c55e"}}>{fmt(c.capitalTotal)}</p><p style={{fontSize:9,color:"#4a6a4a",marginTop:2}}>Pronto + Cierre + Reparaciones</p></div>
                 </div>
-                <div style={{ padding: "16px 20px" }}>
-                  {Object.entries(ccByCategory).map(([cat, items]) => {
-                    const catTotal = items.reduce((s, i) => s + i.amount, 0);
-                    const col = catColors[cat] || "#6a6a8a";
+                <div style={{padding:"16px 20px"}}>
+                  {Object.entries(ccByCat).map(([cat,items])=>{
+                    const tot=items.reduce((s,i)=>s+i.amount,0);
+                    const col=catColors[cat]||"#6a6a8a";
                     return (
-                      <div key={cat} style={{ marginBottom: 18 }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, paddingBottom: 6, borderBottom: `1px solid ${col}30` }}>
-                          <span style={{ fontSize: 10, fontWeight: 700, color: col, letterSpacing: "0.1em", textTransform: "uppercase" }}>{cat}</span>
-                          <span style={{ fontSize: 12, fontWeight: 800, color: col }}>{fmt(catTotal)}</span>
+                      <div key={cat} style={{marginBottom:18}}>
+                        <div style={{display:"flex",justifyContent:"space-between",marginBottom:8,paddingBottom:6,borderBottom:`1px solid ${col}30`}}>
+                          <span style={{fontSize:10,fontWeight:700,color:col,letterSpacing:"0.1em",textTransform:"uppercase"}}>{cat}</span>
+                          <span style={{fontSize:12,fontWeight:800,color:col}}>{fmt(tot)}</span>
                         </div>
-                        {items.map((item, idx) => (
-                          <div key={idx} style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8, marginBottom: 6 }}>
-                            <div><span style={{ fontSize: 12, color: "#c0c0d8" }}>{item.label}</span><span style={{ fontSize: 9, color: "#4a4a6a", marginLeft: 8 }}>{item.note}</span></div>
-                            <span style={{ fontSize: 13, fontWeight: 700, color: "#e0e0f0", fontFamily: "monospace" }}>{fmtD(item.amount)}</span>
+                        {items.map((item,idx)=>(
+                          <div key={idx} style={{display:"grid",gridTemplateColumns:"1fr auto",gap:8,marginBottom:6}}>
+                            <div><span style={{fontSize:12,color:"#c0c0d8"}}>{item.label}</span><span style={{fontSize:9,color:"#4a4a6a",marginLeft:8}}>{item.note}</span></div>
+                            <span style={{fontSize:13,fontWeight:700,color:"#e0e0f0",fontFamily:"monospace"}}>{fmtD(item.amount)}</span>
                           </div>
                         ))}
                       </div>
                     );
                   })}
-                  <p style={{ fontSize: 9, color: "#3a3a5a", marginTop: 8, textAlign: "center" }}>⚠ Estimado. Confirma cifras con tu notario y banco.</p>
+                  <p style={{fontSize:9,color:"#3a3a5a",marginTop:8,textAlign:"center"}}>⚠ Estimado. Confirma cifras con tu notario y banco.</p>
                 </div>
               </div>
             </Sec>
@@ -415,240 +424,206 @@ function App() {
       )}
 
       {/* ══ RENTA VS VENTA ══ */}
-      {tab === "rentaventa" && (
-        <div style={{ maxWidth: 1200, margin: "0 auto", padding: 20 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 20 }}>
-            <div style={{ background: "#090f09", border: "2px solid #22c55e40", borderRadius: 14, padding: "18px 20px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}><span>🏠</span><span style={{ fontSize: 11, color: "#22c55e", letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: 700 }}>Ingreso por Renta</span></div>
+      {tab==="rv" && (
+        <div style={{maxWidth:1200,margin:"0 auto",padding:20}}>
+
+          {/* Top panels */}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:20}}>
+            <div style={{background:"#090f09",border:"2px solid #22c55e40",borderRadius:14,padding:"18px 20px"}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}><span>🏠</span><span style={{fontSize:11,color:"#22c55e",letterSpacing:"0.12em",textTransform:"uppercase",fontWeight:700}}>Ingreso por Renta</span></div>
               <Field label="Renta Mensual — Unidad 1" val={renta1} set={setRenta1} small />
-              {units >= 2 && <Field label="Renta — Unidad 2" val={renta2} set={setRenta2} small />}
-              {units >= 3 && <Field label="Renta — Unidad 3" val={renta3} set={setRenta3} small />}
-              {units < 3 && <button onClick={() => setUnits(u => u + 1)} style={{ background:"transparent", border:"1px dashed #22c55e40", color:"#22c55e80", borderRadius:6, padding:"5px 12px", fontSize:10, cursor:"pointer", marginBottom:10, width:"100%" }}>+ Agregar Unidad</button>}
-              <div style={{ height: 1, background: "#1a2a1a", margin: "12px 0" }} />
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
-                <StatBox label="RENTA /MES" val={fmtD(c.rentaBruta)} color="#22c55e" />
-                <StatBox label="RENTA /AÑO" val={fmt(c.rentaAnual)} color="#22c55e" />
-                <StatBox label="CASHFLOW /MES" val={fmtD(c.cfm)} color={c.cfm >= 0 ? "#22c55e" : "#ef4444"} />
+              {units>=2 && <Field label="Renta — Unidad 2" val={renta2} set={setRenta2} small />}
+              {units>=3 && <Field label="Renta — Unidad 3" val={renta3} set={setRenta3} small />}
+              {units<3 && <button onClick={()=>setUnits(u=>u+1)} style={{background:"transparent",border:"1px dashed #22c55e40",color:"#22c55e80",borderRadius:6,padding:"5px 12px",fontSize:10,cursor:"pointer",marginBottom:10,width:"100%"}}>+ Agregar Unidad</button>}
+              <div style={{height:1,background:"#1a2a1a",margin:"12px 0"}} />
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+                <SBox label="RENTA /MES" val={fmtD(c.rentaBruta)} color="#22c55e" />
+                <SBox label="RENTA /AÑO" val={fmt(c.rentaAnual)} color="#22c55e" />
+                <SBox label="CASHFLOW /MES" val={fmtD(c.cfm)} color={c.cfm>=0?"#22c55e":"#ef4444"} />
               </div>
             </div>
-            <div style={{ background: "#0f0f09", border: "2px solid #f59e0b40", borderRadius: 14, padding: "18px 20px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}><span>💵</span><span style={{ fontSize: 11, color: "#f59e0b", letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: 700 }}>Ingreso por Venta (hoy)</span></div>
+
+            <div style={{background:"#0f0f09",border:"2px solid #f59e0b40",borderRadius:14,padding:"18px 20px"}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}><span>💵</span><span style={{fontSize:11,color:"#f59e0b",letterSpacing:"0.12em",textTransform:"uppercase",fontWeight:700}}>Ingreso por Venta (hoy)</span></div>
               <Field label="Precio de Venta" val={precioVenta} set={setPrecioVenta} />
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                <Field label="Comisión Agente %" val={comisionAgente} set={setComisionAgente} pre="%" small />
-                <Field label="Costos de Cierre Venta $" val={cierreVentaDlr} set={setCierreVentaDlr} small />
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                <Field label="Comisión Agente %" val={comision} set={setComision} pre="%" small />
+                <Field label="Costos de Cierre Venta $" val={cierreVenta} set={setCierreVenta} small />
               </div>
-              <Field label="Deuda de Hipoteca" val={deudaHipoteca} set={setDeudaHipoteca} note={c.tieneHistorial ? "balance real según historial" : "auto desde data propiedad"} small />
-              <div style={{ height: 1, background: "#2a2a1a", margin: "12px 0" }} />
-              {[["Precio de Venta", fmt(precioVenta), "#e0e0f0"], ["− Comisión Agente", `−${fmt(rv.comisionDlr)}`, "#ef4444"], ["− Costos de Cierre", `−${fmt(cierreVentaDlr)}`, "#ef4444"], ["− Deuda Hipoteca", `−${fmt(deudaHipoteca)}`, "#ef4444"]].map(([l, v, col]) => (
-                <div key={l} style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                  <span style={{ fontSize: 11, color: "#5a5a7a" }}>{l}</span>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: col, fontFamily: "monospace" }}>{v}</span>
+              <Field label="Deuda de Hipoteca" val={deudaH} set={setDeudaH} note={c.tieneH?"balance real según historial":"auto desde data propiedad"} small />
+              <div style={{height:1,background:"#2a2a1a",margin:"12px 0"}} />
+              {[["Precio de Venta",fmt(precioVenta),"#e0e0f0"],["− Comisión Agente",`−${fmt(rv.comDlr)}`,"#ef4444"],["− Costos de Cierre",`−${fmt(cierreVenta)}`,"#ef4444"],["− Deuda Hipoteca",`−${fmt(deudaH)}`,"#ef4444"]].map(([l,v,col])=>(
+                <div key={l} style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
+                  <span style={{fontSize:11,color:"#5a5a7a"}}>{l}</span>
+                  <span style={{fontSize:12,fontWeight:700,color:col,fontFamily:"monospace"}}>{v}</span>
                 </div>
               ))}
-              <div style={{ height: 1, background: "#f59e0b30", margin: "10px 0" }} />
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ fontSize: 12, color: "#b0b0d0", fontWeight: 700 }}>GANANCIA NETA HOY</span>
-                <span style={{ fontSize: 22, fontWeight: 900, color: rv.gananciaNetaHoy >= 0 ? "#22c55e" : "#ef4444", fontFamily: "monospace" }}>{fmt(rv.gananciaNetaHoy)}</span>
+              <div style={{height:1,background:"#f59e0b30",margin:"10px 0"}} />
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <span style={{fontSize:12,color:"#b0b0d0",fontWeight:700}}>GANANCIA NETA HOY</span>
+                <span style={{fontSize:22,fontWeight:900,color:rv.ganHoy>=0?"#22c55e":"#ef4444",fontFamily:"monospace"}}>{fmt(rv.ganHoy)}</span>
               </div>
             </div>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20, background: "#0d0d18", border: "1px solid #1e1e2e", borderRadius: 10, padding: "12px 18px", flexWrap: "wrap" }}>
-            <span style={{ fontSize: 10, color: "#5a5a7a", textTransform: "uppercase", whiteSpace: "nowrap" }}>Proyección renta a:</span>
-            {[3, 5, 10, 15, 20].map(y => <button key={y} onClick={() => setHorizonte(y)} style={{ background: horizonte === y ? "#f59e0b" : "#0a0a14", color: horizonte === y ? "#07070f" : "#6a6a9a", border: `1px solid ${horizonte === y ? "#f59e0b" : "#1e1e2e"}`, borderRadius: 6, padding: "5px 14px", fontSize: 11, cursor: "pointer", fontWeight: 800 }}>{y} años</button>)}
-            <div style={{ width: 1, height: 20, background: "#1e1e2e" }} />
-            <span style={{ fontSize: 10, color: "#5a5a7a", textTransform: "uppercase", whiteSpace: "nowrap" }}>Apreciación anual:</span>
-            <div style={{ display: "flex", background: "#0a0a14", border: "1px solid #1e1e2e", borderRadius: 6, alignItems: "center", overflow: "hidden", width: 80 }}>
-              <input type="number" value={apreciacion} onChange={e => setApreciacion(parseFloat(e.target.value) || 0)} style={{ background: "transparent", border: "none", outline: "none", color: "#e0e0f0", fontSize: 13, padding: "5px 8px", width: "100%", fontFamily: "monospace", fontWeight: 700 }} />
-              <span style={{ padding: "0 6px", color: "#3a3a5a", fontSize: 11 }}>%</span>
+          {/* Horizonte bar */}
+          <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20,background:"#0d0d18",border:"1px solid #1e1e2e",borderRadius:10,padding:"12px 18px",flexWrap:"wrap"}}>
+            <span style={{fontSize:10,color:"#5a5a7a",textTransform:"uppercase",whiteSpace:"nowrap"}}>Proyección renta a:</span>
+            {[3,5,10,15,20].map(y=><button key={y} onClick={()=>setHorizonte(y)} style={{background:horizonte===y?"#f59e0b":"#0a0a14",color:horizonte===y?"#07070f":"#6a6a9a",border:`1px solid ${horizonte===y?"#f59e0b":"#1e1e2e"}`,borderRadius:6,padding:"5px 14px",fontSize:11,cursor:"pointer",fontWeight:800}}>{y} años</button>)}
+            <div style={{width:1,height:20,background:"#1e1e2e"}} />
+            <span style={{fontSize:10,color:"#5a5a7a",textTransform:"uppercase",whiteSpace:"nowrap"}}>Apreciación anual:</span>
+            <div style={{display:"flex",background:"#0a0a14",border:"1px solid #1e1e2e",borderRadius:6,alignItems:"center",overflow:"hidden",width:80}}>
+              <input type="number" value={apreciacion} onChange={e=>setApreciacion(parseFloat(e.target.value)||0)}
+                style={{background:"transparent",border:"none",outline:"none",color:"#e0e0f0",fontSize:13,padding:"5px 8px",width:"100%",fontFamily:"monospace",fontWeight:700}} />
+              <span style={{padding:"0 6px",color:"#3a3a5a",fontSize:11}}>%</span>
             </div>
           </div>
 
-          <Sec title="Análisis de Inversión" icon="📈">
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: 12 }}>
-              <Card label="NOI Mensual" val={fmtD(c.noim)} sub={`Anual: ${fmt(c.noia)}`} color="#f59e0b" size="lg" />
-              <Card label="Cap Rate" val={fmtPct(c.capRate)} sub="NOI / Precio compra" color={sc(c.capRate)} badge={c.capRate >= 8 ? "🔥 Excelente" : c.capRate >= 5 ? "Bueno" : "Bajo"} />
-              <Card label="Cash on Cash" val={fmtPct(c.coc)} sub="Cashflow / Capital inv." color={sc(c.coc)} badge={c.coc >= 8 ? "🔥 Excelente" : ""} />
-              <Card label="Cashflow Mensual" val={fmtD(c.cfm)} sub={`Anual: ${fmt(c.cfa)}`} color={cfColor} />
+          {/* PITI Breakdown - editable */}
+          <div style={{background:"#0d0d18",border:"1px solid #a78bfa40",borderRadius:12,padding:"14px 18px",marginBottom:20}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+              <div>
+                <p style={{fontSize:10,color:"#a78bfa",fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase"}}>💳 Pago Mensual Estimado al Banco (PITI)</p>
+                <p style={{fontSize:9,color:"#4a4a6a",marginTop:3}}>Campos editables — ingresa valores reales si los tienes del banco. Dejar en 0 usa estimado PR.</p>
+              </div>
+              <p style={{fontSize:24,fontWeight:900,color:"#a78bfa",fontFamily:"monospace"}}>{fmtD(c.pagoTotal)}</p>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: 12 }}>
-              <Card label="DSCR" val={c.dscr.toFixed(2) + "x"} sub="NOI / P&I (banco ≥1.25x)" color={c.dscr >= 1.25 ? "#22c55e" : "#ef4444"} badge={c.dscr >= 1.25 ? "✓ Apto" : "⚠ Bajo"} />
-              <Card label="GRM" val={c.grm.toFixed(1) + "x"} sub="Precio / Renta anual (≤10)" color={c.grm <= 10 ? "#22c55e" : c.grm <= 14 ? "#f59e0b" : "#ef4444"} />
-              <Card label="Gastos / Renta" val={fmtPct(c.pctGastos)} sub="Sin hipoteca (meta ≤50%)" color={c.pctGastos <= 50 ? "#22c55e" : "#ef4444"} />
+            <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:10}}>
+              {/* P&I readonly */}
+              <div style={{background:"#0a0a12",borderRadius:8,padding:"10px 12px"}}>
+                <p style={{fontSize:8,color:"#6a6a8a",marginBottom:6,textTransform:"uppercase"}}>P&I <span style={{color:"#3a3a5a"}}>— auto</span></p>
+                <p style={{fontSize:16,fontWeight:900,color:"#e0e0f0",fontFamily:"monospace"}}>{fmtD(c.pAndI)}</p>
+                <p style={{fontSize:8,color:"#3a3a5a",marginTop:3}}>Precio, tasa y plazo</p>
+              </div>
+              <EField label="Seguro de Hogar /mes" val={eHogar||c.escHogar} set={setEHogar} color="#fb923c" note="est. $80-$150" />
+              <EField label="CRIM /mes" val={eCRIM||c.escCRIM} set={setECRIM} color="#f59e0b" note="est. $80-$120" />
+              <EField label="Seguro Huracán /mes" val={eHuracan||c.escHuracan} set={setEHuracan} color="#f59e0b" note="est. $200-$400" />
+              <EField label="Seg. Inundación /mes" val={eInundacion||c.escInundacion} set={setEInundacion} color="#60a5fa" note="est. $60-$150" />
+              <EField label={tipoH==="FHA"?"FHA MIP /mes":tipoH==="VA"?"VA":tipoH==="USDA"?"USDA Fee /mes":"PMI /mes"} val={eMIP||c.escMIP} set={setEMIP} color="#f87171" note="auto" />
+            </div>
+            <p style={{fontSize:9,color:"#3a3a5a",marginTop:10}}>⚠ Estimados basados en promedios de PR. Edita con los valores reales que te provea el banco.</p>
+          </div>
+
+          {/* Métricas */}
+          <Sec title="Análisis de Inversión" icon="📈">
+            <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:12}}>
+              <Card label="NOI Mensual" val={fmtD(c.noim)} sub={`Anual: ${fmt(c.noia)}`} color="#f59e0b" size="lg" />
+              <Card label="Cap Rate" val={fmtPct(c.capRate)} sub="NOI / Precio compra" color={sc(c.capRate)} badge={c.capRate>=8?"🔥 Excelente":c.capRate>=5?"Bueno":"Bajo"} />
+              <Card label="Cash on Cash" val={fmtPct(c.coc)} sub="Cashflow / Capital inv." color={sc(c.coc)} badge={c.coc>=8?"🔥 Excelente":""} />
+              <Card label="Cashflow Mensual" val={fmtD(c.cfm)} sub={`Anual: ${fmt(c.cfa)}`} color={cfCol} />
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:12}}>
+              <Card label="DSCR" val={c.dscr.toFixed(2)+"x"} sub="NOI / P&I (banco ≥1.25x)" color={c.dscr>=1.25?"#22c55e":"#ef4444"} badge={c.dscr>=1.25?"✓ Apto":"⚠ Bajo"} />
+              <Card label="GRM" val={c.grm.toFixed(1)+"x"} sub="Precio / Renta anual (≤10)" color={c.grm<=10?"#22c55e":c.grm<=14?"#f59e0b":"#ef4444"} />
+              <Card label="Gastos / Renta" val={fmtPct(c.pctG)} sub="Sin hipoteca (meta ≤50%)" color={c.pctG<=50?"#22c55e":"#ef4444"} />
               <Card label="Capital Total Necesario" val={fmt(c.capitalTotal)} sub="Pronto + Cierre + Reparaciones" color="#a78bfa" />
             </div>
-
-            {/* PITI Breakdown - Editable */}
-            <div style={{ background: "#0d0d18", border: "1px solid #a78bfa40", borderRadius: 12, padding: "14px 18px", marginBottom: 12 }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-                <div>
-                  <p style={{ fontSize: 10, color: "#a78bfa", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>💳 Pago Mensual Estimado al Banco (PITI)</p>
-                  <p style={{ fontSize: 9, color: "#4a4a6a", marginTop: 3 }}>Campos editables — ingresa los valores reales si los tienes del banco</p>
-                </div>
-                <p style={{ fontSize: 24, fontWeight: 900, color: "#a78bfa", fontFamily: "monospace" }}>{fmtD(c.pagoTotalMensual)}</p>
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
-                {/* P&I - readonly */}
-                <div style={{ background: "#0a0a12", borderRadius: 8, padding: "10px 12px" }}>
-                  <p style={{ fontSize: 8, color: "#6a6a8a", marginBottom: 6, textTransform: "uppercase" }}>P&I (Principal + Interés) <span style={{ color: "#3a3a5a" }}>— auto</span></p>
-                  <p style={{ fontSize: 16, fontWeight: 900, color: "#e0e0f0", fontFamily: "monospace" }}>{fmtD(c.pAndI)}</p>
-                  <p style={{ fontSize: 8, color: "#3a3a5a", marginTop: 3 }}>Calculado de precio, tasa y plazo</p>
-                </div>
-                {/* Seguro Hogar */}
-                <div style={{ background: "#0a0a12", borderRadius: 8, padding: "10px 12px" }}>
-                  <p style={{ fontSize: 8, color: "#fb923c", marginBottom: 4, textTransform: "uppercase" }}>Seguro de Hogar /mes {escrowSeguroHogarEdit === 0 && <span style={{ color: "#3a3a5a" }}>— est. $80-$150</span>}</p>
-                  <div style={{ display: "flex", background: "#07070f", border: "1px solid #fb923c30", borderRadius: 6, alignItems: "center", overflow: "hidden" }}>
-                    <span style={{ padding: "0 6px", color: "#5a3a2a", fontSize: 11 }}>$</span>
-                    <input type="number" value={escrowSeguroHogarEdit || c.escrowSeguroHogar} onChange={e => setEscrowSeguroHogarEdit(parseFloat(e.target.value) || 0)}
-                      style={{ background: "transparent", border: "none", outline: "none", color: "#fb923c", fontSize: 14, padding: "7px 4px", width: "100%", fontFamily: "monospace", fontWeight: 700 }} />
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+              {[{label:"Regla del 50%",pass:c.r50,desc:`Gastos ${fmtPct(c.pctG)} de renta. Límite: ${fmtD(c.rentaBruta*0.5)}/mes`},{label:"Regla del 1%",pass:c.r1,desc:`Renta ${fmtD(c.rentaBruta)}/mes vs 1% precio = ${fmtD(precio*0.01)}/mes`}].map(({label,pass,desc})=>(
+                <div key={label} style={{background:"#0d0d18",border:`1px solid ${pass?"#22c55e30":"#ef444430"}`,borderRadius:10,padding:"12px 16px"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:5}}>
+                    <span style={{width:7,height:7,borderRadius:"50%",background:pass?"#22c55e":"#ef4444",boxShadow:`0 0 6px ${pass?"#22c55e":"#ef4444"}`,display:"block"}} />
+                    <span style={{fontSize:11,fontWeight:700,color:pass?"#22c55e":"#ef4444"}}>{label} — {pass?"✓ CUMPLE":"✗ NO CUMPLE"}</span>
                   </div>
-                </div>
-                {/* CRIM */}
-                <div style={{ background: "#0a0a12", borderRadius: 8, padding: "10px 12px" }}>
-                  <p style={{ fontSize: 8, color: "#f59e0b", marginBottom: 4, textTransform: "uppercase" }}>CRIM / Contribuciones /mes {escrowCRIMEdit === 0 && <span style={{ color: "#3a3a5a" }}>— est. $80-$120</span>}</p>
-                  <div style={{ display: "flex", background: "#07070f", border: "1px solid #f59e0b30", borderRadius: 6, alignItems: "center", overflow: "hidden" }}>
-                    <span style={{ padding: "0 6px", color: "#5a4a2a", fontSize: 11 }}>$</span>
-                    <input type="number" value={escrowCRIMEdit || c.escrowCRIM} onChange={e => setEscrowCRIMEdit(parseFloat(e.target.value) || 0)}
-                      style={{ background: "transparent", border: "none", outline: "none", color: "#f59e0b", fontSize: 14, padding: "7px 4px", width: "100%", fontFamily: "monospace", fontWeight: 700 }} />
-                  </div>
-                </div>
-                {/* Seguro Huracán */}
-                <div style={{ background: "#0a0a12", borderRadius: 8, padding: "10px 12px" }}>
-                  <p style={{ fontSize: 8, color: "#f59e0b", marginBottom: 4, textTransform: "uppercase" }}>Seguro Huracán /mes {escrowHuracanEdit === 0 && <span style={{ color: "#3a3a5a" }}>— est. $200-$400</span>}</p>
-                  <div style={{ display: "flex", background: "#07070f", border: "1px solid #f59e0b30", borderRadius: 6, alignItems: "center", overflow: "hidden" }}>
-                    <span style={{ padding: "0 6px", color: "#5a4a2a", fontSize: 11 }}>$</span>
-                    <input type="number" value={escrowHuracanEdit || c.escrowHuracan} onChange={e => setEscrowHuracanEdit(parseFloat(e.target.value) || 0)}
-                      style={{ background: "transparent", border: "none", outline: "none", color: "#f59e0b", fontSize: 14, padding: "7px 4px", width: "100%", fontFamily: "monospace", fontWeight: 700 }} />
-                  </div>
-                </div>
-                {/* Seguro Inundación */}
-                <div style={{ background: "#0a0a12", borderRadius: 8, padding: "10px 12px" }}>
-                  <p style={{ fontSize: 8, color: "#60a5fa", marginBottom: 4, textTransform: "uppercase" }}>Seguro Inundación /mes {escrowInundacionEdit === 0 && <span style={{ color: "#3a3a5a" }}>— est. $60-$150</span>}</p>
-                  <div style={{ display: "flex", background: "#07070f", border: "1px solid #60a5fa30", borderRadius: 6, alignItems: "center", overflow: "hidden" }}>
-                    <span style={{ padding: "0 6px", color: "#2a3a5a", fontSize: 11 }}>$</span>
-                    <input type="number" value={escrowInundacionEdit} onChange={e => setEscrowInundacionEdit(parseFloat(e.target.value) || 0)}
-                      style={{ background: "transparent", border: "none", outline: "none", color: "#60a5fa", fontSize: 14, padding: "7px 4px", width: "100%", fontFamily: "monospace", fontWeight: 700 }} />
-                  </div>
-                </div>
-                {/* MIP/PMI */}
-                <div style={{ background: "#0a0a12", borderRadius: 8, padding: "10px 12px" }}>
-                  <p style={{ fontSize: 8, color: "#f87171", marginBottom: 4, textTransform: "uppercase" }}>
-                    {tipoH === "FHA" ? "FHA MIP Mensual" : tipoH === "Convencional" && pronto < 20 ? "PMI Mensual" : tipoH === "USDA" ? "USDA Fee Mensual" : "Seg. Gob. Mensual"}
-                    {escrowMIPEdit === 0 && <span style={{ color: "#3a3a5a" }}> — auto</span>}
-                  </p>
-                  <div style={{ display: "flex", background: "#07070f", border: "1px solid #f8717130", borderRadius: 6, alignItems: "center", overflow: "hidden" }}>
-                    <span style={{ padding: "0 6px", color: "#5a2a2a", fontSize: 11 }}>$</span>
-                    <input type="number" value={escrowMIPEdit || c.escrowMIP} onChange={e => setEscrowMIPEdit(parseFloat(e.target.value) || 0)}
-                      style={{ background: "transparent", border: "none", outline: "none", color: "#f87171", fontSize: 14, padding: "7px 4px", width: "100%", fontFamily: "monospace", fontWeight: 700 }} />
-                  </div>
-                </div>
-              </div>
-              <p style={{ fontSize: 9, color: "#3a3a5a", marginTop: 10 }}>⚠ Estimados basados en promedios del mercado de PR. Edita los campos con los valores reales que te provea el banco.</p>
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              {[{ label: "Regla del 50%", pass: c.r50, desc: `Gastos ${fmtPct(c.pctGastos)} de renta. Límite: ${fmtD(c.rentaBruta * 0.5)}/mes` }, { label: "Regla del 1%", pass: c.r1, desc: `Renta ${fmtD(c.rentaBruta)}/mes vs 1% precio = ${fmtD(precio * 0.01)}/mes` }].map(({ label, pass, desc }) => (
-                <div key={label} style={{ background: "#0d0d18", border: `1px solid ${pass ? "#22c55e30" : "#ef444430"}`, borderRadius: 10, padding: "12px 16px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 5 }}>
-                    <span style={{ width: 7, height: 7, borderRadius: "50%", background: pass ? "#22c55e" : "#ef4444", boxShadow: `0 0 6px ${pass ? "#22c55e" : "#ef4444"}`, display: "block" }} />
-                    <span style={{ fontSize: 11, fontWeight: 700, color: pass ? "#22c55e" : "#ef4444" }}>{label} — {pass ? "✓ CUMPLE" : "✗ NO CUMPLE"}</span>
-                  </div>
-                  <p style={{ fontSize: 10, color: "#5a5a7a" }}>{desc}</p>
+                  <p style={{fontSize:10,color:"#5a5a7a"}}>{desc}</p>
                 </div>
               ))}
             </div>
           </Sec>
 
-          <div style={{ height: 1, background: "#1a1a2a", margin: "4px 0 20px" }} />
+          <div style={{height:1,background:"#1a1a2a",margin:"4px 0 20px"}} />
 
-          <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
-            <div style={{ background: rv.winner === "renta" ? "#0a1a0a" : "#1a1a0a", border: `2px solid ${rv.winner === "renta" ? "#22c55e" : "#f59e0b"}`, borderRadius: 14, padding: "16px 48px", textAlign: "center" }}>
-              <p style={{ fontSize: 10, color: "#5a5a7a", letterSpacing: "0.12em", marginBottom: 6 }}>ESTRATEGIA GANADORA EN {horizonte} AÑOS</p>
-              <p style={{ fontSize: 22, fontWeight: 900, color: rv.winner === "renta" ? "#22c55e" : "#f59e0b" }}>{rv.winner === "renta" ? "🏠 RENTAR" : "💵 VENDER"}</p>
-              <p style={{ fontSize: 11, color: "#5a5a7a", marginTop: 4 }}>Diferencia: {fmt(Math.abs(rv.totalReturnRenta - rv.totalReturnVenta))} a favor de {rv.winner === "renta" ? "rentar" : "vender"}</p>
+          {/* Ganador */}
+          <div style={{display:"flex",justifyContent:"center",marginBottom:20}}>
+            <div style={{background:rv.winner==="renta"?"#0a1a0a":"#1a1a0a",border:`2px solid ${rv.winner==="renta"?"#22c55e":"#f59e0b"}`,borderRadius:14,padding:"16px 48px",textAlign:"center"}}>
+              <p style={{fontSize:10,color:"#5a5a7a",letterSpacing:"0.12em",marginBottom:6}}>ESTRATEGIA GANADORA EN {horizonte} AÑOS</p>
+              <p style={{fontSize:22,fontWeight:900,color:rv.winner==="renta"?"#22c55e":"#f59e0b"}}>{rv.winner==="renta"?"🏠 RENTAR":"💵 VENDER"}</p>
+              <p style={{fontSize:11,color:"#5a5a7a",marginTop:4}}>Diferencia: {fmt(Math.abs(rv.totR-rv.totV))} a favor de {rv.winner==="renta"?"rentar":"vender"}</p>
             </div>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 20 }}>
-            <div style={{ background: "#090f09", border: "2px solid #22c55e40", borderRadius: 14, padding: "20px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}><span style={{ fontSize: 18 }}>🏠</span><h3 style={{ fontSize: 14, fontWeight: 900, color: "#22c55e", margin: 0 }}>RENTAR</h3><span style={{ fontSize: 10, background: "#22c55e20", color: "#22c55e", padding: "2px 10px", borderRadius: 20 }}>{horizonte} años</span></div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 14 }}>
-                {[["Cashflow Mensual", fmtD(c.cfm), c.cfm >= 0 ? "#22c55e" : "#ef4444"], ["Cashflow Anual", fmt(c.cfa), c.cfm >= 0 ? "#22c55e" : "#ef4444"], [`Cashflow ${horizonte} años`, fmt(rv.last.cumCF || 0), c.cfm >= 0 ? "#22c55e" : "#ef4444"], ["Equity Acumulado", fmt(rv.last.cumEquity || 0), "#60a5fa"], ["Valor Futuro", fmt(rv.last.valorAño || 0), "#c084fc"], ["Apreciación", fmt((rv.last.valorAño || 0) - precio), "#c084fc"]].map(([l, v, col]) => (
-                  <div key={l} style={{ background: "#0d0d18", borderRadius: 8, padding: "10px 12px" }}><p style={{ fontSize: 9, color: "#4a4a6a", marginBottom: 4 }}>{l}</p><p style={{ fontSize: 14, fontWeight: 800, color: col }}>{v}</p></div>
+          {/* Renta vs Venta cards */}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:20}}>
+            <div style={{background:"#090f09",border:"2px solid #22c55e40",borderRadius:14,padding:"20px"}}>
+              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16}}><span style={{fontSize:18}}>🏠</span><h3 style={{fontSize:14,fontWeight:900,color:"#22c55e",margin:0}}>RENTAR</h3><span style={{fontSize:10,background:"#22c55e20",color:"#22c55e",padding:"2px 10px",borderRadius:20}}>{horizonte} años</span></div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14}}>
+                {[["Cashflow Mensual",fmtD(c.cfm),c.cfm>=0?"#22c55e":"#ef4444"],["Cashflow Anual",fmt(c.cfa),c.cfm>=0?"#22c55e":"#ef4444"],[`Cashflow ${horizonte} años`,fmt(rv.last.cumCF||0),c.cfm>=0?"#22c55e":"#ef4444"],["Equity Acumulado",fmt(rv.last.cumEq||0),"#60a5fa"],["Valor Futuro",fmt(rv.last.vAño||0),"#c084fc"],["Apreciación",fmt((rv.last.vAño||0)-precio),"#c084fc"]].map(([l,v,col])=>(
+                  <div key={l} style={{background:"#0d0d18",borderRadius:8,padding:"10px 12px"}}><p style={{fontSize:9,color:"#4a4a6a",marginBottom:4}}>{l}</p><p style={{fontSize:14,fontWeight:800,color:col}}>{v}</p></div>
                 ))}
               </div>
-              <div style={{ background: "#0d1a0d", border: "1px solid #22c55e30", borderRadius: 10, padding: "14px 16px" }}>
-                <p style={{ fontSize: 10, color: "#5a7a5a", marginBottom: 4 }}>RETORNO TOTAL ({horizonte} años)</p>
-                <p style={{ fontSize: 26, fontWeight: 900, color: "#22c55e" }}>{fmt(rv.totalReturnRenta)}</p>
-                <p style={{ fontSize: 10, color: "#4a6a4a", marginTop: 4 }}>Cashflow + Equity + Apreciación</p>
+              <div style={{background:"#0d1a0d",border:"1px solid #22c55e30",borderRadius:10,padding:"14px 16px"}}>
+                <p style={{fontSize:10,color:"#5a7a5a",marginBottom:4}}>RETORNO TOTAL ({horizonte} años)</p>
+                <p style={{fontSize:26,fontWeight:900,color:"#22c55e"}}>{fmt(rv.totR)}</p>
+                <p style={{fontSize:10,color:"#4a6a4a",marginTop:4}}>Cashflow + Equity + Apreciación</p>
               </div>
             </div>
-            <div style={{ background: "#0f0f09", border: "2px solid #f59e0b40", borderRadius: 14, padding: "20px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}><span style={{ fontSize: 18 }}>💵</span><h3 style={{ fontSize: 14, fontWeight: 900, color: "#f59e0b", margin: 0 }}>VENDER EN {horizonte} AÑOS</h3></div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 14 }}>
-                {[[`Valor en ${horizonte} años`, fmt(rv.last.valorAño || 0), "#c084fc"], ["Deuda Restante", fmt(rv.last.balance || 0), "#ef4444"], ["Comisión", fmt((rv.last.valorAño || 0) * comisionAgente / 100), "#ef4444"], ["Ganancia Neta Futura", fmt(rv.last.gananciaVenta || 0), (rv.last.gananciaVenta || 0) >= 0 ? "#22c55e" : "#ef4444"]].map(([l, v, col]) => (
-                  <div key={l} style={{ background: "#0d0d18", borderRadius: 8, padding: "10px 12px" }}><p style={{ fontSize: 9, color: "#4a4a6a", marginBottom: 4 }}>{l}</p><p style={{ fontSize: 14, fontWeight: 800, color: col }}>{v}</p></div>
+            <div style={{background:"#0f0f09",border:"2px solid #f59e0b40",borderRadius:14,padding:"20px"}}>
+              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16}}><span style={{fontSize:18}}>💵</span><h3 style={{fontSize:14,fontWeight:900,color:"#f59e0b",margin:0}}>VENDER EN {horizonte} AÑOS</h3></div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14}}>
+                {[[`Valor en ${horizonte} años`,fmt(rv.last.vAño||0),"#c084fc"],["Deuda Restante",fmt(rv.last.bal||0),"#ef4444"],["Comisión",fmt((rv.last.vAño||0)*comision/100),"#ef4444"],["Ganancia Neta Futura",fmt(rv.last.gV||0),(rv.last.gV||0)>=0?"#22c55e":"#ef4444"]].map(([l,v,col])=>(
+                  <div key={l} style={{background:"#0d0d18",borderRadius:8,padding:"10px 12px"}}><p style={{fontSize:9,color:"#4a4a6a",marginBottom:4}}>{l}</p><p style={{fontSize:14,fontWeight:800,color:col}}>{v}</p></div>
                 ))}
               </div>
-              <div style={{ background: "#1a1a0d", border: "1px solid #f59e0b30", borderRadius: 10, padding: "14px 16px" }}>
-                <p style={{ fontSize: 10, color: "#7a7a5a", marginBottom: 4 }}>GANANCIA NETA SI VENDES EN {horizonte} AÑOS</p>
-                <p style={{ fontSize: 26, fontWeight: 900, color: "#f59e0b" }}>{fmt(rv.totalReturnVenta)}</p>
+              <div style={{background:"#1a1a0d",border:"1px solid #f59e0b30",borderRadius:10,padding:"14px 16px"}}>
+                <p style={{fontSize:10,color:"#7a7a5a",marginBottom:4}}>GANANCIA NETA SI VENDES EN {horizonte} AÑOS</p>
+                <p style={{fontSize:26,fontWeight:900,color:"#f59e0b"}}>{fmt(rv.totV)}</p>
               </div>
             </div>
           </div>
 
-          <div style={{ background: "#0d0d18", border: "1px solid #1e1e2e", borderRadius: 14, overflow: "hidden" }}>
-            <div style={{ padding: "13px 20px", borderBottom: "1px solid #1e1e2e" }}>
-              <span style={{ fontSize: 11, color: "#b0b0d0", letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 700 }}>📅 Proyección Año por Año</span>
+          {/* Tabla */}
+          <div style={{background:"#0d0d18",border:"1px solid #1e1e2e",borderRadius:14,overflow:"hidden"}}>
+            <div style={{padding:"13px 20px",borderBottom:"1px solid #1e1e2e"}}>
+              <span style={{fontSize:11,color:"#b0b0d0",letterSpacing:"0.1em",textTransform:"uppercase",fontWeight:700}}>📅 Proyección Año por Año</span>
             </div>
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <div style={{overflowX:"auto"}}>
+              <table style={{width:"100%",borderCollapse:"collapse"}}>
                 <thead>
-                  <tr style={{ background: "#0a0a14" }}>
-                    {["Año", "CF Acumulado", "Equity Pagado", "Valor Propiedad", "Deuda Restante", "Ganancia si Vendes", "Total Renta*"].map(h => (
-                      <th key={h} style={{ padding: "10px 14px", fontSize: 9, color: "#5a5a7a", letterSpacing: "0.08em", textTransform: "uppercase", textAlign: "right", fontWeight: 700, whiteSpace: "nowrap" }}>{h}</th>
+                  <tr style={{background:"#0a0a14"}}>
+                    {["Año","CF Acumulado","Equity Pagado","Valor Propiedad","Deuda Restante","Ganancia si Vendes","Total Renta*"].map(h=>(
+                      <th key={h} style={{padding:"10px 14px",fontSize:9,color:"#5a5a7a",letterSpacing:"0.08em",textTransform:"uppercase",textAlign:"right",fontWeight:700,whiteSpace:"nowrap"}}>{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {rv.yearlyData.map((row, i) => (
-                    <tr key={row.yr} style={{ borderTop: "1px solid #12121e", background: i % 2 === 0 ? "#0d0d18" : "#0a0a12" }}>
-                      <td style={{ padding: "9px 14px", fontSize: 12, color: "#f59e0b", fontWeight: 700, textAlign: "right" }}>{row.yr}</td>
-                      <td style={{ padding: "9px 14px", fontSize: 12, color: row.cumCF >= 0 ? "#22c55e" : "#ef4444", textAlign: "right", fontFamily: "monospace" }}>{fmt(row.cumCF)}</td>
-                      <td style={{ padding: "9px 14px", fontSize: 12, color: "#60a5fa", textAlign: "right", fontFamily: "monospace" }}>{fmt(row.cumEquity)}</td>
-                      <td style={{ padding: "9px 14px", fontSize: 12, color: "#c084fc", textAlign: "right", fontFamily: "monospace" }}>{fmt(row.valorAño)}</td>
-                      <td style={{ padding: "9px 14px", fontSize: 12, color: "#ef4444", textAlign: "right", fontFamily: "monospace" }}>{fmt(row.balance)}</td>
-                      <td style={{ padding: "9px 14px", fontSize: 12, color: row.gananciaVenta >= 0 ? "#22c55e" : "#ef4444", textAlign: "right", fontFamily: "monospace", fontWeight: 700 }}>{fmt(row.gananciaVenta)}</td>
-                      <td style={{ padding: "9px 14px", fontSize: 12, color: "#f59e0b", textAlign: "right", fontFamily: "monospace", fontWeight: 700 }}>{fmt(row.totalRenta)}</td>
+                  {rv.rows.map((row,i)=>(
+                    <tr key={row.yr} style={{borderTop:"1px solid #12121e",background:i%2===0?"#0d0d18":"#0a0a12"}}>
+                      <td style={{padding:"9px 14px",fontSize:12,color:"#f59e0b",fontWeight:700,textAlign:"right"}}>{row.yr}</td>
+                      <td style={{padding:"9px 14px",fontSize:12,color:row.cumCF>=0?"#22c55e":"#ef4444",textAlign:"right",fontFamily:"monospace"}}>{fmt(row.cumCF)}</td>
+                      <td style={{padding:"9px 14px",fontSize:12,color:"#60a5fa",textAlign:"right",fontFamily:"monospace"}}>{fmt(row.cumEq)}</td>
+                      <td style={{padding:"9px 14px",fontSize:12,color:"#c084fc",textAlign:"right",fontFamily:"monospace"}}>{fmt(row.vAño)}</td>
+                      <td style={{padding:"9px 14px",fontSize:12,color:"#ef4444",textAlign:"right",fontFamily:"monospace"}}>{fmt(row.bal)}</td>
+                      <td style={{padding:"9px 14px",fontSize:12,color:row.gV>=0?"#22c55e":"#ef4444",textAlign:"right",fontFamily:"monospace",fontWeight:700}}>{fmt(row.gV)}</td>
+                      <td style={{padding:"9px 14px",fontSize:12,color:"#f59e0b",textAlign:"right",fontFamily:"monospace",fontWeight:700}}>{fmt(row.totR)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            <p style={{ padding: "8px 18px", fontSize: 9, color: "#3a3a5a" }}>* Total Renta = Cashflow + Equity + Apreciación acumulada. Proyección estimada, no garantizada.</p>
+            <p style={{padding:"8px 18px",fontSize:9,color:"#3a3a5a"}}>* Total Renta = Cashflow + Equity + Apreciación acumulada. Proyección estimada.</p>
           </div>
         </div>
       )}
 
       {/* ══ GUARDADOS ══ */}
-      {tab === "comparar" && (
-        <div style={{ padding: 20 }}>
-          {saved.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "60px 20px", color: "#3a3a5a" }}>
-              <p style={{ fontSize: 36, marginBottom: 12 }}>💾</p>
+      {tab==="saved" && (
+        <div style={{padding:20}}>
+          {saved.length===0 ? (
+            <div style={{textAlign:"center",padding:"60px 20px",color:"#3a3a5a"}}>
+              <p style={{fontSize:36,marginBottom:12}}>💾</p>
               <p>No hay análisis guardados. Ingresa la data y presiona GUARDAR.</p>
             </div>
           ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 12 }}>
-              {saved.map((s, i) => (
-                <div key={i} style={{ background: "#0d0d18", border: "1px solid #1e1e2e", borderRadius: 12, padding: "16px 18px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
-                    <div><p style={{ fontSize: 13, fontWeight: 800, color: "#e0e0f0" }}>{s.name}</p><p style={{ fontSize: 10, color: "#4a4a6a" }}>{s.date} · {fmt(s.precio)}</p></div>
-                    <button onClick={() => setSaved(sv => sv.filter((_, j) => j !== i))} style={{ background: "none", border: "none", color: "#4a4a6a", cursor: "pointer", fontSize: 14 }}>✕</button>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:12}}>
+              {saved.map((s,i)=>(
+                <div key={i} style={{background:"#0d0d18",border:"1px solid #1e1e2e",borderRadius:12,padding:"16px 18px"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:10}}>
+                    <div><p style={{fontSize:13,fontWeight:800,color:"#e0e0f0"}}>{s.name}</p><p style={{fontSize:10,color:"#4a4a6a"}}>{s.date} · {fmt(s.precio)}</p></div>
+                    <button onClick={()=>setSaved(sv=>sv.filter((_,j)=>j!==i))} style={{background:"none",border:"none",color:"#4a4a6a",cursor:"pointer",fontSize:14}}>✕</button>
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7 }}>
-                    {[["Cap Rate", fmtPct(s.c.capRate), sc(s.c.capRate)], ["Cash on Cash", fmtPct(s.c.coc), sc(s.c.coc)], ["NOI/mes", fmtD(s.c.noim), "#f59e0b"], ["CF/mes", fmtD(s.c.cfm), s.c.cfm >= 0 ? "#22c55e" : "#ef4444"], ["DSCR", s.c.dscr.toFixed(2) + "x", s.c.dscr >= 1.25 ? "#22c55e" : "#ef4444"], ["Cierre", fmt(s.c.cierreDlr), "#c084fc"]].map(([l, v, col]) => (
-                      <div key={l} style={{ background: "#0a0a12", borderRadius: 7, padding: "8px 10px" }}><p style={{ fontSize: 8, color: "#4a4a6a", marginBottom: 3 }}>{l}</p><p style={{ fontSize: 12, fontWeight: 800, color: col }}>{v}</p></div>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7}}>
+                    {[["Cap Rate",fmtPct(s.c.capRate),sc(s.c.capRate)],["Cash on Cash",fmtPct(s.c.coc),sc(s.c.coc)],["NOI/mes",fmtD(s.c.noim),"#f59e0b"],["CF/mes",fmtD(s.c.cfm),s.c.cfm>=0?"#22c55e":"#ef4444"],["DSCR",s.c.dscr.toFixed(2)+"x",s.c.dscr>=1.25?"#22c55e":"#ef4444"],["Pago PITI",fmtD(s.c.pagoTotal),"#a78bfa"]].map(([l,v,col])=>(
+                      <div key={l} style={{background:"#0a0a12",borderRadius:7,padding:"8px 10px"}}><p style={{fontSize:8,color:"#4a4a6a",marginBottom:3}}>{l}</p><p style={{fontSize:12,fontWeight:800,color:col}}>{v}</p></div>
                     ))}
                   </div>
                 </div>
@@ -659,25 +634,24 @@ function App() {
       )}
 
       {/* ══ GUÍA PR ══ */}
-      {tab === "guia" && (
-        <div style={{ padding: 20, maxWidth: 880, margin: "0 auto" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            {[["🏛️ CRIM / Contribuciones","Impuesto municipal. Varía por municipio y tasación. Exención residencia principal ~$15,000. Promedio inversión: $800-$2,500/año."],["🌀 Seguro Huracán","Esencial en PR. Temporada jun-nov. El prestamista lo requiere. Cobertura de reemplazamiento total recomendada."],["🌊 Seguro Inundación NFIP","Obligatorio en zonas FEMA. Promedio PR: $700-$2,500/año. Verifica mapa de zonas antes de comprar."],["📄 Costos de Cierre PR","3-6% financiado. Notario (1%≤$150k / 0.5% resto), registro, sellos, title insurance, tasación, origination fee, prepagados."],["🏦 Bancos Locales PR","Banco Popular, FirstBank, Oriental Bank. Promedio costos de cierre PR: $7,601 (2024). Tasas 30yr: ~6.31%."],["📊 Métricas Meta PR","Cap Rate ≥8% excelente. Cash on Cash ≥8% = meta. DSCR ≥1.25x = bancos. GRM ≤10x. Cashflow positivo = prioridad."],["🏠 Vacancia PR","5-8% áreas urbanas. 10-15% zonas rurales o turísticas. Tiempo promedio alquiler: 2-4 semanas."],["⚖️ Ley 60 / Incentivos","4% impuesto corporativo, 0% dividendos/ganancias de capital. Requiere 183 días residencia. Consulta CPA."],["🔑 Property Management","8-10% de renta bruta. Recomendado si no resides en PR. Verifica licencia con DACO."],["📐 Reglas Generales","Regla 50%: gastos operativos ~50% renta bruta. Regla 1%: renta mensual ≥1% precio compra."]].map(([title, desc]) => (
-              <div key={title} style={{ background: "#0d0d18", border: "1px solid #1e1e2e", borderRadius: 12, padding: "14px 16px" }}>
-                <p style={{ fontSize: 11, fontWeight: 800, color: "#f59e0b", marginBottom: 6 }}>{title}</p>
-                <p style={{ fontSize: 10, color: "#6a6a8a", lineHeight: 1.7 }}>{desc}</p>
+      {tab==="guia" && (
+        <div style={{padding:20,maxWidth:880,margin:"0 auto"}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+            {[["🏛️ CRIM / Contribuciones","Impuesto municipal. Varía por municipio y tasación. Exención residencia principal ~$15,000. Promedio inversión: $800-$2,500/año."],["🌀 Seguro Huracán","Esencial en PR. Temporada jun-nov. El prestamista lo requiere. Cobertura de reemplazamiento total recomendada. Promedio $200-$400/mes."],["🌊 Seguro Inundación NFIP","Obligatorio en zonas FEMA. Promedio PR: $60-$150/mes. Verifica mapa de zonas antes de comprar."],["📄 Costos de Cierre PR","3-6% financiado. Notario (1%≤$150k / 0.5% resto), registro, sellos, title insurance, tasación, origination fee, prepagados."],["🏦 Bancos Locales PR","Banco Popular, FirstBank, Oriental Bank. Promedio costos de cierre PR: $7,601 (2024). Tasas 30yr: ~6.31%."],["📊 Métricas Meta PR","Cap Rate ≥8% excelente. Cash on Cash ≥8% = meta. DSCR ≥1.25x = bancos. GRM ≤10x. Cashflow positivo = prioridad."],["🏠 Vacancia PR","5-8% áreas urbanas. 10-15% zonas rurales o turísticas. Tiempo promedio alquiler: 2-4 semanas."],["⚖️ Ley 60 / Incentivos","4% impuesto corporativo, 0% dividendos/ganancias de capital. Requiere 183 días residencia. Consulta CPA."],["🔑 Property Management","8-10% de renta bruta. Recomendado si no resides en PR. Verifica licencia con DACO."],["📐 Reglas Generales","Regla 50%: gastos operativos ~50% renta bruta. Regla 1%: renta mensual ≥1% precio compra."]].map(([title,desc])=>(
+              <div key={title} style={{background:"#0d0d18",border:"1px solid #1e1e2e",borderRadius:12,padding:"14px 16px"}}>
+                <p style={{fontSize:11,fontWeight:800,color:"#f59e0b",marginBottom:6}}>{title}</p>
+                <p style={{fontSize:10,color:"#6a6a8a",lineHeight:1.7}}>{desc}</p>
               </div>
             ))}
           </div>
-          <p style={{ textAlign: "center", fontSize: 9, color: "#2a2a4a", marginTop: 16 }}>⚠ Herramienta educativa. Consulta agente licenciado, CPA y abogado antes de invertir.</p>
+          <p style={{textAlign:"center",fontSize:9,color:"#2a2a4a",marginTop:16}}>⚠ Herramienta educativa. Consulta agente licenciado, CPA y abogado antes de invertir.</p>
         </div>
       )}
     </div>
   );
 }
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(<App />);
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
 </body>
 </html>
