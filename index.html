@@ -4,9 +4,9 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>PR Property Analyzer</title>
-<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.23.5/babel.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: #07070f; color: #e0e0f0; font-family: monospace; }
@@ -21,6 +21,13 @@
 </head>
 <body>
 <div id="root"></div>
+<div id="error" style="display:none;color:#ff6b6b;padding:20px;font-family:monospace;white-space:pre-wrap;background:#1a0000;"></div>
+<script>
+window.onerror = function(msg, src, line, col, err) {
+  document.getElementById('error').style.display = 'block';
+  document.getElementById('error').textContent = 'ERROR: ' + msg + '\nLine: ' + line + '\n' + (err ? err.stack : '');
+};
+</script>
 <script type="text/babel">
 const { useState, useMemo, useEffect } = React;
 
@@ -392,7 +399,7 @@ function App() {
               <div style={{background:"#080c08",border:"2px solid #f59e0b30",borderRadius:14,overflow:"hidden"}}>
                 <div style={{background:"#0f120a",borderBottom:"1px solid #2a2a1a",padding:"16px 20px",display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12}}>
                   <div><p style={{fontSize:9,color:"#5a5a7a",marginBottom:4}}>TOTAL COSTOS DE CIERRE</p><p style={{fontSize:22,fontWeight:900,color:"#f59e0b"}}>{fmt(c.cc.total)}</p></div>
-                  <div><p style={{fontSize:9,color:"#5a5a7a",marginBottom:4}}>% DEL PRECIO</p><p style={{fontSize:22,fontWeight:900,color:"#c084fc"}}>{fmtPct(c.cc.total/precio*100)}</p></div>
+                  <div><p style={{fontSize:9,color:"#5a5a7a",marginBottom:4}}>% DEL PRECIO</p><p style={{fontSize:22,fontWeight:900,color:"#c084fc"}}>{precio>0?fmtPct(c.cc.total/precio*100):"0.00%"}</p></div>
                   <div><p style={{fontSize:9,color:"#5a5a7a",marginBottom:4}}>PRONTO</p><p style={{fontSize:22,fontWeight:900,color:"#60a5fa"}}>{fmt(c.prontoDlr)}</p></div>
                   <div><p style={{fontSize:9,color:"#5a5a7a",marginBottom:4}}>CAPITAL TOTAL NECESARIO</p><p style={{fontSize:22,fontWeight:900,color:"#22c55e"}}>{fmt(c.capitalTotal)}</p><p style={{fontSize:9,color:"#4a6a4a",marginTop:2}}>Pronto + Cierre + Reparaciones</p></div>
                 </div>
