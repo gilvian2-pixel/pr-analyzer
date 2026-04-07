@@ -164,6 +164,14 @@ function App() {
   const [deudaHipoteca, setDeudaHipoteca] = useState(0);
   const [apreciacion, setApreciacion] = useState(0);
   const [horizonte, setHorizonte] = useState(0);
+
+  // ── ESCROW EDITABLES (PITI) ──
+  const [escrowSeguroHogarEdit, setEscrowSeguroHogarEdit] = useState(0);
+  const [escrowCRIMEdit, setEscrowCRIMEdit] = useState(0);
+  const [escrowHuracanEdit, setEscrowHuracanEdit] = useState(0);
+  const [escrowInundacionEdit, setEscrowInundacionEdit] = useState(0);
+  const [escrowMIPEdit, setEscrowMIPEdit] = useState(0);
+
   const [saved, setSaved] = useState([]);
   const [propName, setPropName] = useState("Mi Propiedad");
 
@@ -177,15 +185,13 @@ function App() {
     const fhaMipMonthly = tipoH === "FHA" ? hipoteca * 0.0055 / 12 : 0;
     const usdaMonthly = tipoH === "USDA" ? hipoteca * 0.0035 / 12 : 0;
 
-    // Escrow estimado mensual (lo que el banco cobra junto al P&I)
-    const escrowSeguroHogar = precio * 0.0055 / 12;      // seguro hazard ~0.55%/año
-    const escrowCRIM = precio * 0.0083 / 12;             // contribuciones ~1%/año
-    const escrowHuracan = precio * 0.012 / 12;           // huracán ~1.2%/año (PR específico)
-    const escrowMIP = fhaMipMonthly;                     // FHA MIP si aplica
-    const escrowPMI = pmiMonthly;                        // PMI convencional si aplica
-    const escrowUSDA = usdaMonthly;                      // USDA fee si aplica
-    // Pago total estimado al banco (PITI)
-    const pagoTotalMensual = pAndI + escrowSeguroHogar + escrowCRIM + escrowHuracan + escrowMIP + escrowPMI + escrowUSDA;
+    // Escrow: usa valor editado si > 0, si no usa estimado PR realista
+    const escrowSeguroHogar = escrowSeguroHogarEdit > 0 ? escrowSeguroHogarEdit : Math.round(precio * 0.009 / 12);   // ~0.9%/año
+    const escrowCRIM        = escrowCRIMEdit > 0        ? escrowCRIMEdit        : Math.round(precio * 0.0083 / 12); // ~1%/año
+    const escrowHuracan     = escrowHuracanEdit > 0     ? escrowHuracanEdit     : Math.round(precio * 0.02 / 12);   // ~2%/año (PR post-María)
+    const escrowInundacion  = escrowInundacionEdit > 0  ? escrowInundacionEdit  : 0;                                // 0 hasta que usuario ingrese
+    const escrowMIP         = escrowMIPEdit > 0         ? escrowMIPEdit         : fhaMipMonthly + pmiMonthly + usdaMonthly;
+    const pagoTotalMensual  = pAndI + escrowSeguroHogar + escrowCRIM + escrowHuracan + escrowInundacion + escrowMIP;
     const rentaBruta = renta1 + renta2 + renta3;
     const rentaAnual = rentaBruta * 12;
     const gastos = crim + seguro + huracan + inundacion + hoa + pmiMonthly + fhaMipMonthly + usdaMonthly + agua + elec + internet + basura + jardineria + admin + mant + vacancia + extra;
@@ -216,7 +222,8 @@ function App() {
     }
     const tieneHistorial = mesCompra > 0 && anoCompra > 0;
     const equityAcumulado = hipoteca - balanceRestante;
-    return { prontoDlr, hipoteca, capitalTotal, pAndI, pagoTotalMensual, escrowSeguroHogar, escrowCRIM, escrowHuracan, pmiMonthly, fhaMipMonthly, usdaMonthly, rentaBruta, rentaAnual, gastos, gastosAnual: gastos * 12, noim, noia, capRate, cfm, cfa, coc, pctGastos, dscr, grm, r50, r1, p, cc, cierreDlr: cc.total, balanceRestante, pagosMensualesRealizados, tieneHistorial, equityAcumulado };
+    return { prontoDlr, hipoteca, capitalTotal, pAndI, pagoTotalMensual, escrowSeguroHogar, escrowCRIM, escrowHuracan, escrowInundacion, escrowMIP, pmiMonthly, fhaMipMonthly, usdaMonthly, rentaBruta, rentaAnual, gastos, gastosAnual: gastos * 12, noim, noia, capRate, cfm, cfa, coc, pctGastos, dscr, grm, r50, r1, p, cc, cierreDlr: cc.total, balanceRestante, pagosMensualesRealizados, tieneHistorial, equityAcumulado };
+  }, [precio, pronto, plazo, tasa, tipoH, reparaciones, mesCompra, anoCompra, escrowSeguroHogarEdit, escrowCRIMEdit, escrowHuracanEdit, escrowInundacionEdit, escrowMIPEdit, renta1, renta2, renta3, crim, seguro, huracan, inundacion, hoa, agua, elec, internet, basura, jardineria, admin, mant, vacancia, extra]);
   }, [precio, pronto, plazo, tasa, tipoH, reparaciones, mesCompra, anoCompra, renta1, renta2, renta3, crim, seguro, huracan, inundacion, hoa, agua, elec, internet, basura, jardineria, admin, mant, vacancia, extra]);
 
   useEffect(() => { setDeudaHipoteca(Math.round(c.balanceRestante)); }, [c.balanceRestante]);
@@ -472,28 +479,72 @@ function App() {
               <Card label="Capital Total Necesario" val={fmt(c.capitalTotal)} sub="Pronto + Cierre + Reparaciones" color="#a78bfa" />
             </div>
 
-            {/* PITI Breakdown */}
+            {/* PITI Breakdown - Editable */}
             <div style={{ background: "#0d0d18", border: "1px solid #a78bfa40", borderRadius: 12, padding: "14px 18px", marginBottom: 12 }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-                <p style={{ fontSize: 10, color: "#a78bfa", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>💳 Pago Mensual Estimado al Banco (PITI)</p>
-                <p style={{ fontSize: 20, fontWeight: 900, color: "#a78bfa", fontFamily: "monospace" }}>{fmtD(c.pagoTotalMensual)}</p>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                <div>
+                  <p style={{ fontSize: 10, color: "#a78bfa", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>💳 Pago Mensual Estimado al Banco (PITI)</p>
+                  <p style={{ fontSize: 9, color: "#4a4a6a", marginTop: 3 }}>Campos editables — ingresa los valores reales si los tienes del banco</p>
+                </div>
+                <p style={{ fontSize: 24, fontWeight: 900, color: "#a78bfa", fontFamily: "monospace" }}>{fmtD(c.pagoTotalMensual)}</p>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 8 }}>
-                {[
-                  ["P&I (Principal + Interés)", fmtD(c.pAndI), "#e0e0f0"],
-                  ["Seguro de Hogar", fmtD(c.escrowSeguroHogar), "#fb923c"],
-                  ["CRIM / Contribuciones", fmtD(c.escrowCRIM), "#f59e0b"],
-                  ["Seguro Huracán (est.)", fmtD(c.escrowHuracan), "#f59e0b"],
-                  c.fhaMipMonthly > 0 ? ["FHA MIP Mensual", fmtD(c.fhaMipMonthly), "#f87171"] : c.pmiMonthly > 0 ? ["PMI Mensual", fmtD(c.pmiMonthly), "#f87171"] : ["Seguro Gob.", "N/A", "#3a3a5a"],
-                  ["TOTAL ESTIMADO", fmtD(c.pagoTotalMensual), "#a78bfa"],
-                ].map(([l, v, col]) => (
-                  <div key={l} style={{ background: "#0a0a12", borderRadius: 7, padding: "8px 10px" }}>
-                    <p style={{ fontSize: 8, color: "#4a4a6a", marginBottom: 4, textTransform: "uppercase" }}>{l}</p>
-                    <p style={{ fontSize: 13, fontWeight: 800, color: col }}>{v}</p>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+                {/* P&I - readonly */}
+                <div style={{ background: "#0a0a12", borderRadius: 8, padding: "10px 12px" }}>
+                  <p style={{ fontSize: 8, color: "#6a6a8a", marginBottom: 6, textTransform: "uppercase" }}>P&I (Principal + Interés) <span style={{ color: "#3a3a5a" }}>— auto</span></p>
+                  <p style={{ fontSize: 16, fontWeight: 900, color: "#e0e0f0", fontFamily: "monospace" }}>{fmtD(c.pAndI)}</p>
+                  <p style={{ fontSize: 8, color: "#3a3a5a", marginTop: 3 }}>Calculado de precio, tasa y plazo</p>
+                </div>
+                {/* Seguro Hogar */}
+                <div style={{ background: "#0a0a12", borderRadius: 8, padding: "10px 12px" }}>
+                  <p style={{ fontSize: 8, color: "#fb923c", marginBottom: 4, textTransform: "uppercase" }}>Seguro de Hogar /mes {escrowSeguroHogarEdit === 0 && <span style={{ color: "#3a3a5a" }}>— est. ~0.9%/año</span>}</p>
+                  <div style={{ display: "flex", background: "#07070f", border: "1px solid #fb923c30", borderRadius: 6, alignItems: "center", overflow: "hidden" }}>
+                    <span style={{ padding: "0 6px", color: "#5a3a2a", fontSize: 11 }}>$</span>
+                    <input type="number" value={escrowSeguroHogarEdit || c.escrowSeguroHogar} onChange={e => setEscrowSeguroHogarEdit(parseFloat(e.target.value) || 0)}
+                      style={{ background: "transparent", border: "none", outline: "none", color: "#fb923c", fontSize: 14, padding: "7px 4px", width: "100%", fontFamily: "monospace", fontWeight: 700 }} />
                   </div>
-                ))}
+                </div>
+                {/* CRIM */}
+                <div style={{ background: "#0a0a12", borderRadius: 8, padding: "10px 12px" }}>
+                  <p style={{ fontSize: 8, color: "#f59e0b", marginBottom: 4, textTransform: "uppercase" }}>CRIM / Contribuciones /mes {escrowCRIMEdit === 0 && <span style={{ color: "#3a3a5a" }}>— est. ~1%/año</span>}</p>
+                  <div style={{ display: "flex", background: "#07070f", border: "1px solid #f59e0b30", borderRadius: 6, alignItems: "center", overflow: "hidden" }}>
+                    <span style={{ padding: "0 6px", color: "#5a4a2a", fontSize: 11 }}>$</span>
+                    <input type="number" value={escrowCRIMEdit || c.escrowCRIM} onChange={e => setEscrowCRIMEdit(parseFloat(e.target.value) || 0)}
+                      style={{ background: "transparent", border: "none", outline: "none", color: "#f59e0b", fontSize: 14, padding: "7px 4px", width: "100%", fontFamily: "monospace", fontWeight: 700 }} />
+                  </div>
+                </div>
+                {/* Seguro Huracán */}
+                <div style={{ background: "#0a0a12", borderRadius: 8, padding: "10px 12px" }}>
+                  <p style={{ fontSize: 8, color: "#f59e0b", marginBottom: 4, textTransform: "uppercase" }}>Seguro Huracán /mes {escrowHuracanEdit === 0 && <span style={{ color: "#3a3a5a" }}>— est. ~2%/año</span>}</p>
+                  <div style={{ display: "flex", background: "#07070f", border: "1px solid #f59e0b30", borderRadius: 6, alignItems: "center", overflow: "hidden" }}>
+                    <span style={{ padding: "0 6px", color: "#5a4a2a", fontSize: 11 }}>$</span>
+                    <input type="number" value={escrowHuracanEdit || c.escrowHuracan} onChange={e => setEscrowHuracanEdit(parseFloat(e.target.value) || 0)}
+                      style={{ background: "transparent", border: "none", outline: "none", color: "#f59e0b", fontSize: 14, padding: "7px 4px", width: "100%", fontFamily: "monospace", fontWeight: 700 }} />
+                  </div>
+                </div>
+                {/* Seguro Inundación */}
+                <div style={{ background: "#0a0a12", borderRadius: 8, padding: "10px 12px" }}>
+                  <p style={{ fontSize: 8, color: "#60a5fa", marginBottom: 4, textTransform: "uppercase" }}>Seguro Inundación /mes {escrowInundacionEdit === 0 && <span style={{ color: "#3a3a5a" }}>— si aplica FEMA</span>}</p>
+                  <div style={{ display: "flex", background: "#07070f", border: "1px solid #60a5fa30", borderRadius: 6, alignItems: "center", overflow: "hidden" }}>
+                    <span style={{ padding: "0 6px", color: "#2a3a5a", fontSize: 11 }}>$</span>
+                    <input type="number" value={escrowInundacionEdit} onChange={e => setEscrowInundacionEdit(parseFloat(e.target.value) || 0)}
+                      style={{ background: "transparent", border: "none", outline: "none", color: "#60a5fa", fontSize: 14, padding: "7px 4px", width: "100%", fontFamily: "monospace", fontWeight: 700 }} />
+                  </div>
+                </div>
+                {/* MIP/PMI */}
+                <div style={{ background: "#0a0a12", borderRadius: 8, padding: "10px 12px" }}>
+                  <p style={{ fontSize: 8, color: "#f87171", marginBottom: 4, textTransform: "uppercase" }}>
+                    {tipoH === "FHA" ? "FHA MIP Mensual" : tipoH === "Convencional" && pronto < 20 ? "PMI Mensual" : tipoH === "USDA" ? "USDA Fee Mensual" : "Seg. Gob. Mensual"}
+                    {escrowMIPEdit === 0 && <span style={{ color: "#3a3a5a" }}> — auto</span>}
+                  </p>
+                  <div style={{ display: "flex", background: "#07070f", border: "1px solid #f8717130", borderRadius: 6, alignItems: "center", overflow: "hidden" }}>
+                    <span style={{ padding: "0 6px", color: "#5a2a2a", fontSize: 11 }}>$</span>
+                    <input type="number" value={escrowMIPEdit || c.escrowMIP} onChange={e => setEscrowMIPEdit(parseFloat(e.target.value) || 0)}
+                      style={{ background: "transparent", border: "none", outline: "none", color: "#f87171", fontSize: 14, padding: "7px 4px", width: "100%", fontFamily: "monospace", fontWeight: 700 }} />
+                  </div>
+                </div>
               </div>
-              <p style={{ fontSize: 9, color: "#3a3a5a", marginTop: 10 }}>⚠ Estimado. El banco cobra P&I + escrow de seguros y contribuciones en un solo pago. Confirma con tu banco las pólizas reales.</p>
+              <p style={{ fontSize: 9, color: "#3a3a5a", marginTop: 10 }}>⚠ Estimados basados en promedios del mercado de PR. Edita los campos con los valores reales que te provea el banco.</p>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
               {[{ label: "Regla del 50%", pass: c.r50, desc: `Gastos ${fmtPct(c.pctGastos)} de renta. Límite: ${fmtD(c.rentaBruta * 0.5)}/mes` }, { label: "Regla del 1%", pass: c.r1, desc: `Renta ${fmtD(c.rentaBruta)}/mes vs 1% precio = ${fmtD(precio * 0.01)}/mes` }].map(({ label, pass, desc }) => (
