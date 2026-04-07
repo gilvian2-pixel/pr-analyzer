@@ -185,11 +185,11 @@ function App() {
     const fhaMipMonthly = tipoH === "FHA" ? hipoteca * 0.0055 / 12 : 0;
     const usdaMonthly = tipoH === "USDA" ? hipoteca * 0.0035 / 12 : 0;
 
-    // Escrow: usa valor editado si > 0, si no usa estimado PR realista
-    const escrowSeguroHogar = escrowSeguroHogarEdit > 0 ? escrowSeguroHogarEdit : Math.round(precio * 0.009 / 12);   // ~0.9%/año
-    const escrowCRIM        = escrowCRIMEdit > 0        ? escrowCRIMEdit        : Math.round(precio * 0.0083 / 12); // ~1%/año
-    const escrowHuracan     = escrowHuracanEdit > 0     ? escrowHuracanEdit     : Math.round(precio * 0.02 / 12);   // ~2%/año (PR post-María)
-    const escrowInundacion  = escrowInundacionEdit > 0  ? escrowInundacionEdit  : 0;                                // 0 hasta que usuario ingrese
+    // Escrow: usa valor editado si > 0, si no usa promedio real de PR
+    const escrowSeguroHogar = escrowSeguroHogarEdit > 0 ? escrowSeguroHogarEdit : Math.round(precio * 0.011 / 12);  // ~$115 en $126k → midpoint $80-$150
+    const escrowCRIM        = escrowCRIMEdit > 0        ? escrowCRIMEdit        : Math.round(precio * 0.0095 / 12); // ~$100 en $126k → midpoint $80-$120
+    const escrowHuracan     = escrowHuracanEdit > 0     ? escrowHuracanEdit     : Math.round(precio * 0.0286 / 12); // ~$300 en $126k → midpoint $200-$400
+    const escrowInundacion  = escrowInundacionEdit > 0  ? escrowInundacionEdit  : Math.round(precio * 0.01 / 12);   // ~$105 en $126k → midpoint $60-$150
     const escrowMIP         = escrowMIPEdit > 0         ? escrowMIPEdit         : fhaMipMonthly + pmiMonthly + usdaMonthly;
     const pagoTotalMensual  = pAndI + escrowSeguroHogar + escrowCRIM + escrowHuracan + escrowInundacion + escrowMIP;
     const rentaBruta = renta1 + renta2 + renta3;
@@ -497,7 +497,7 @@ function App() {
                 </div>
                 {/* Seguro Hogar */}
                 <div style={{ background: "#0a0a12", borderRadius: 8, padding: "10px 12px" }}>
-                  <p style={{ fontSize: 8, color: "#fb923c", marginBottom: 4, textTransform: "uppercase" }}>Seguro de Hogar /mes {escrowSeguroHogarEdit === 0 && <span style={{ color: "#3a3a5a" }}>— est. ~0.9%/año</span>}</p>
+                  <p style={{ fontSize: 8, color: "#fb923c", marginBottom: 4, textTransform: "uppercase" }}>Seguro de Hogar /mes {escrowSeguroHogarEdit === 0 && <span style={{ color: "#3a3a5a" }}>— est. $80-$150</span>}</p>
                   <div style={{ display: "flex", background: "#07070f", border: "1px solid #fb923c30", borderRadius: 6, alignItems: "center", overflow: "hidden" }}>
                     <span style={{ padding: "0 6px", color: "#5a3a2a", fontSize: 11 }}>$</span>
                     <input type="number" value={escrowSeguroHogarEdit || c.escrowSeguroHogar} onChange={e => setEscrowSeguroHogarEdit(parseFloat(e.target.value) || 0)}
@@ -506,7 +506,7 @@ function App() {
                 </div>
                 {/* CRIM */}
                 <div style={{ background: "#0a0a12", borderRadius: 8, padding: "10px 12px" }}>
-                  <p style={{ fontSize: 8, color: "#f59e0b", marginBottom: 4, textTransform: "uppercase" }}>CRIM / Contribuciones /mes {escrowCRIMEdit === 0 && <span style={{ color: "#3a3a5a" }}>— est. ~1%/año</span>}</p>
+                  <p style={{ fontSize: 8, color: "#f59e0b", marginBottom: 4, textTransform: "uppercase" }}>CRIM / Contribuciones /mes {escrowCRIMEdit === 0 && <span style={{ color: "#3a3a5a" }}>— est. $80-$120</span>}</p>
                   <div style={{ display: "flex", background: "#07070f", border: "1px solid #f59e0b30", borderRadius: 6, alignItems: "center", overflow: "hidden" }}>
                     <span style={{ padding: "0 6px", color: "#5a4a2a", fontSize: 11 }}>$</span>
                     <input type="number" value={escrowCRIMEdit || c.escrowCRIM} onChange={e => setEscrowCRIMEdit(parseFloat(e.target.value) || 0)}
@@ -515,7 +515,7 @@ function App() {
                 </div>
                 {/* Seguro Huracán */}
                 <div style={{ background: "#0a0a12", borderRadius: 8, padding: "10px 12px" }}>
-                  <p style={{ fontSize: 8, color: "#f59e0b", marginBottom: 4, textTransform: "uppercase" }}>Seguro Huracán /mes {escrowHuracanEdit === 0 && <span style={{ color: "#3a3a5a" }}>— est. ~2%/año</span>}</p>
+                  <p style={{ fontSize: 8, color: "#f59e0b", marginBottom: 4, textTransform: "uppercase" }}>Seguro Huracán /mes {escrowHuracanEdit === 0 && <span style={{ color: "#3a3a5a" }}>— est. $200-$400</span>}</p>
                   <div style={{ display: "flex", background: "#07070f", border: "1px solid #f59e0b30", borderRadius: 6, alignItems: "center", overflow: "hidden" }}>
                     <span style={{ padding: "0 6px", color: "#5a4a2a", fontSize: 11 }}>$</span>
                     <input type="number" value={escrowHuracanEdit || c.escrowHuracan} onChange={e => setEscrowHuracanEdit(parseFloat(e.target.value) || 0)}
@@ -524,7 +524,7 @@ function App() {
                 </div>
                 {/* Seguro Inundación */}
                 <div style={{ background: "#0a0a12", borderRadius: 8, padding: "10px 12px" }}>
-                  <p style={{ fontSize: 8, color: "#60a5fa", marginBottom: 4, textTransform: "uppercase" }}>Seguro Inundación /mes {escrowInundacionEdit === 0 && <span style={{ color: "#3a3a5a" }}>— si aplica FEMA</span>}</p>
+                  <p style={{ fontSize: 8, color: "#60a5fa", marginBottom: 4, textTransform: "uppercase" }}>Seguro Inundación /mes {escrowInundacionEdit === 0 && <span style={{ color: "#3a3a5a" }}>— est. $60-$150</span>}</p>
                   <div style={{ display: "flex", background: "#07070f", border: "1px solid #60a5fa30", borderRadius: 6, alignItems: "center", overflow: "hidden" }}>
                     <span style={{ padding: "0 6px", color: "#2a3a5a", fontSize: 11 }}>$</span>
                     <input type="number" value={escrowInundacionEdit} onChange={e => setEscrowInundacionEdit(parseFloat(e.target.value) || 0)}
