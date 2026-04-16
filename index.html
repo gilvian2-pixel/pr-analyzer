@@ -2,798 +2,575 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>PR Property Analyzer</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>LEGACY Uniforms – Sistema de Gestión</title>
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{background:#07070f;color:#e0e0f0;font-family:monospace;font-size:13px}
-input[type=number]{-moz-appearance:textfield}
-input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none}
-::-webkit-scrollbar{width:6px;height:6px}
-::-webkit-scrollbar-track{background:#0a0a14}
-::-webkit-scrollbar-thumb{background:#2a2a3a;border-radius:3px}
-.header{background:#0c0c18;border-bottom:1px solid #1a1a2a;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
-.tabs{border-bottom:1px solid #1a1a2a;padding:0 20px;display:flex;overflow-x:auto}
-.tab{background:none;border:none;border-bottom:2px solid transparent;color:#5a5a7a;padding:11px 16px;font-size:11px;cursor:pointer;font-weight:700;letter-spacing:.07em;text-transform:uppercase;white-space:nowrap;font-family:monospace}
-.tab.active{border-bottom-color:#f59e0b;color:#f59e0b}
-.page{display:none}.page.active{display:block}
-.inp{background:#0d0d18;border:1px solid #252535;border-radius:7px;color:#e0e0f0;font-size:14px;padding:9px 10px;width:100%;outline:none;font-family:monospace;font-weight:600}
-.inp-wrap{display:flex;align-items:center;background:#0d0d18;border:1px solid #252535;border-radius:7px;overflow:hidden}
-.inp-wrap input{flex:1;background:transparent;border:none;outline:none;color:#e0e0f0;font-size:14px;padding:9px 6px;font-family:monospace;font-weight:600}
-.inp-wrap .pre{padding:0 8px;color:#454565;font-size:12px}
-.lbl{font-size:10px;color:#6a6a8a;letter-spacing:.09em;text-transform:uppercase;display:block;margin-bottom:5px}
-.field{margin-bottom:12px}
-.field.small{margin-bottom:8px}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
-.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
-.grid6{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
-.sbox{background:#0a0a12;border-radius:8px;padding:8px 10px}
-.sbox .sl{font-size:8px;color:#4a4a6a;margin-bottom:3px;letter-spacing:.08em;text-transform:uppercase}
-.sbox .sv{font-size:12px;font-weight:800}
-.card{background:#0d0d18;border-radius:12px;padding:13px 15px;flex:1}
-.card.lg{padding:18px 20px}
-.card .cl{font-size:9px;color:#5a5a7a;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px}
-.card .cv{font-size:18px;font-weight:900;font-family:monospace;line-height:1}
-.card.lg .cv{font-size:22px}
-.card .cs{font-size:10px;color:#4a4a6a;margin-top:5px}
-.card .cb{display:inline-block;margin-top:6px;font-size:9px;padding:2px 8px;border-radius:20px}
-.sec-title{display:flex;align-items:center;gap:8px;margin-bottom:12px}
-.sec-title span{font-size:11px;color:#b0b0d0;letter-spacing:.12em;text-transform:uppercase;font-weight:700}
-.sec-title .line{flex:1;height:1px;background:#1e1e2e}
-.sec{margin-bottom:20px}
-.erow{display:grid;grid-template-columns:1fr 95px 55px;gap:6px;margin-bottom:7px;align-items:center}
-.erow .elbl{font-size:11px;color:#6a6a8a}
-.erow .einp{display:flex;background:#0a0a14;border:1px solid #1e1e2e;border-radius:6px;align-items:center}
-.erow .einp input{background:transparent;border:none;outline:none;color:#c8c8e8;font-size:12px;padding:6px 3px;width:100%;font-family:monospace}
-.erow .epct{background:#080810;border:1px solid #1a1a2a;border-radius:6px;padding:6px 4px;text-align:center;font-size:9px;color:#4a4a6a}
-.btn-save{background:#f59e0b;color:#07070f;border:none;border-radius:7px;padding:8px 14px;font-size:11px;font-weight:900;cursor:pointer;font-family:monospace}
-.rule-box{background:#0d0d18;border-radius:10px;padding:12px 16px}
-.dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:7px}
-select.inp{cursor:pointer}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:system-ui,-apple-system,sans-serif;background:#f5f5f4;color:#111;}
+input,select,textarea{font-family:inherit;font-size:13px;padding:6px 9px;border:0.5px solid #d1d5db;border-radius:6px;outline:none;background:#fff;color:#111;width:100%;}
+input:focus,select:focus,textarea:focus{border-color:#6b7280;box-shadow:0 0 0 2px rgba(107,114,128,.12);}
+input[type=checkbox]{width:auto;margin-right:5px;accent-color:#2563eb;}
+button{font-family:inherit;cursor:pointer;}
+@media print{.no-print{display:none!important;}body{background:#fff;}}
 </style>
 </head>
 <body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useRef}=React;
+const SIZES=['XS','S','M','L','XL','XXL'];
+const CATALOG=['Polo','T-Shirt / Camisa','Gorra','Jersey Femenino','Jersey Masculino','Hoodie','Pantalón Reversible','Falda','Leggings','Lycra','Medias','Sleeves','Otro'];
+const DEF={'Polo':20,'T-Shirt / Camisa':14,'Gorra':15,'Jersey Femenino':14,'Jersey Masculino':14,'Hoodie':18,'Pantalón Reversible':27,'Falda':15,'Leggings':18,'Lycra':15,'Medias':8,'Sleeves':6,'Otro':0};
+const FABRICS=['Dri-Fit','Sublimación','Algodón','Poliéster','Spandex','Mesh/Malla','French Terry','Lycra','Nylon','Otro'];
+const SPORTS=['Basketball','Fútbol','Volleyball','Baseball','Softball','Tenis','Track & Field','Natación','Ciclismo','Otro'];
+let _n=0;const uid=()=>++_n;
+const today=()=>new Date().toISOString().split('T')[0];
+const fmt=n=>'$'+Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const rf=(file,cb)=>{const r=new FileReader();r.onload=e=>cb(e.target.result);r.readAsDataURL(file);};
+const qtyOf=i=>SIZES.reduce((s,sz)=>s+(Number(i[sz.toLowerCase()])||0),0);
 
-<div class="header">
-  <div>
-    <h1 style="font-size:17px;font-weight:900;color:#f59e0b">🏠 PR PROPERTY ANALYZER</h1>
-    <p style="font-size:9px;color:#4a4a6a;margin-top:2px;letter-spacing:.1em">ANÁLISIS DE INVERSIÓN · PUERTO RICO</p>
-  </div>
-  <div style="display:flex;gap:8px;align-items:center">
-    <input id="propName" value="Mi Propiedad" class="inp" style="width:150px;font-size:12px;padding:7px 12px"/>
-    <button class="btn-save" onclick="saveAnalysis()">💾 GUARDAR</button>
-  </div>
+const newQI=()=>({id:uid(),name:'Polo',price:20,xs:0,s:0,m:0,l:0,xl:0,xxl:0,
+  fabric:'Dri-Fit',material:'',reversible:false,audience:'Adulto',isSport:false,sport:'Basketball',deliveryDate:''});
+const newOI=()=>({id:uid(),garment:'Polo',color:'',fabric:'Dri-Fit',material:'',
+  xs:0,s:0,m:0,l:0,xl:0,xxl:0,productImg:null,logo:null,
+  placement:'Frente pecho izquierdo',placementSize:'5 cm',notes:''});
+const newOrd=()=>{const n=uid();return{id:n,
+  orderNum:`ORD-${new Date().getFullYear()}-${String(n).padStart(3,'0')}`,
+  client:'',date:today(),deliveryDate:'',items:[newOI()],notes:''};};
+
+// ---- HELPERS ----
+const Card=({children,style={}})=>
+  <div style={{background:'#fff',borderRadius:10,border:'0.5px solid #e5e7eb',padding:'14px 16px',...style}}>{children}</div>;
+const Lbl=({c})=>
+  <div style={{fontSize:11,fontWeight:500,color:'#6b7280',marginBottom:4,letterSpacing:'.03em'}}>{c}</div>;
+const Btn=({onClick,children,style={}})=>
+  <button onClick={onClick} style={{padding:'7px 14px',borderRadius:7,border:'0.5px solid #d1d5db',background:'#fff',fontSize:13,...style}}>{children}</button>;
+const Row=({children,gap=10,mb=10,cols})=>
+  <div style={{display:'grid',gridTemplateColumns:cols||`repeat(${React.Children.count(children)},1fr)`,gap,marginBottom:mb}}>{children}</div>;
+const Field=({label,children})=>
+  <div><Lbl c={label}/>{children}</div>;
+const Check=({label,checked,onChange})=>
+  <label style={{display:'flex',alignItems:'center',fontSize:13,cursor:'pointer',gap:4,marginTop:16}}>
+    <input type="checkbox" checked={checked} onChange={e=>onChange(e.target.checked)}/>{label}
+  </label>;
+
+function ImgUp({value,onChange,label}){
+  const ref=useRef();
+  return <div>
+    <Lbl c={label}/>
+    {value
+      ?<div style={{position:'relative'}}>
+        <img src={value} alt={label} style={{width:'100%',height:100,objectFit:'contain',borderRadius:7,border:'0.5px solid #e5e7eb',background:'#f9fafb',display:'block'}}/>
+        <button onClick={()=>onChange(null)} style={{position:'absolute',top:4,right:4,background:'#fff',border:'0.5px solid #d1d5db',borderRadius:5,padding:'1px 7px',fontSize:11,cursor:'pointer',color:'#6b7280',lineHeight:'18px'}}>×</button>
+      </div>
+      :<div onClick={()=>ref.current?.click()} style={{height:100,border:'0.5px dashed #d1d5db',borderRadius:7,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',cursor:'pointer',gap:5,background:'#f9fafb'}}>
+        <div style={{width:28,height:28,border:'0.5px solid #d1d5db',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,color:'#9ca3af',lineHeight:1}}>+</div>
+        <div style={{fontSize:12,color:'#9ca3af'}}>Subir imagen</div>
+        <div style={{fontSize:11,color:'#d1d5db'}}>JPG · PNG</div>
+      </div>}
+    <input ref={ref} type="file" accept="image/*" style={{display:'none'}} onChange={e=>{const f=e.target.files?.[0];if(f)rf(f,onChange);}}/>
+  </div>;
+}
+
+// ---- WORD EXPORT ----
+function exportQuoteToWord({qC,qN,qD,qDD,items}){
+  const dStr=d=>d?new Date(d+'T12:00:00').toLocaleDateString('es-PR',{year:'numeric',month:'long',day:'numeric'}):'—';
+  const total=i=>qtyOf(i)*(Number(i.price)||0);
+  const grand=items.reduce((s,i)=>s+total(i),0);
+  const rows=items.map((item,idx)=>`
+    <tr style="background:${idx%2?'#f9fafb':'#fff'}">
+      <td style="padding:7px 10px;border:1px solid #e5e7eb;font-weight:500">${item.name}</td>
+      <td style="padding:7px 6px;border:1px solid #e5e7eb;text-align:center">${item.fabric||'—'}</td>
+      <td style="padding:7px 6px;border:1px solid #e5e7eb;text-align:center">${item.audience||'—'}</td>
+      <td style="padding:7px 6px;border:1px solid #e5e7eb;text-align:center">${item.isSport?item.sport:'—'}</td>
+      ${SIZES.map(s=>`<td style="padding:7px 5px;border:1px solid #e5e7eb;text-align:center">${Number(item[s.toLowerCase()])||'—'}</td>`).join('')}
+      <td style="padding:7px 8px;border:1px solid #e5e7eb;text-align:center;font-weight:600">${qtyOf(item)}</td>
+      <td style="padding:7px 8px;border:1px solid #e5e7eb;text-align:center">${fmt(item.price)}</td>
+      <td style="padding:7px 10px;border:1px solid #e5e7eb;text-align:right;font-weight:600;color:#2563eb">${fmt(total(item))}</td>
+    </tr>`).join('');
+  const html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="utf-8"/><title>Cotización ${qN}</title>
+<style>
+  body{font-family:Arial,sans-serif;font-size:12pt;color:#111;}
+  table{border-collapse:collapse;width:100%;}
+  th{background:#1e3a5f;color:#fff;padding:7px 8px;font-size:11pt;}
+  .header{display:flex;justify-content:space-between;margin-bottom:20px;}
+  .company{font-size:18pt;font-weight:bold;letter-spacing:2px;}
+  .quote-num{font-size:16pt;font-weight:bold;color:#2563eb;}
+  .totals td{padding:5px 10px;}
+  .grand{font-size:14pt;font-weight:bold;color:#2563eb;}
+  .footer{margin-top:20px;font-size:9pt;color:#6b7280;border-top:1px solid #e5e7eb;padding-top:10px;}
+</style></head>
+<body>
+<table style="margin-bottom:16px;"><tr>
+  <td style="width:50%">
+    <div style="background:#1e3a5f;display:inline-block;padding:6px 12px;border-radius:4px;color:#fff;font-size:18pt;font-weight:bold;letter-spacing:3px;margin-bottom:6px">L</div>
+    <span style="font-size:18pt;font-weight:bold;letter-spacing:2px;margin-left:8px">LEGACY UNIFORMS</span><br/>
+    <span style="font-size:9pt;color:#6b7280">787-249-0678 &nbsp;·&nbsp; santiago.emmanuel08@gmail.com</span>
+  </td>
+  <td style="text-align:right;vertical-align:top">
+    <div style="font-size:16pt;font-weight:bold;color:#2563eb">${qN}</div>
+    <div style="font-size:10pt;color:#6b7280;margin-top:3px">${dStr(qD)}</div>
+  </td>
+</tr></table>
+<table style="margin-bottom:16px;width:auto">
+  <tr><td style="font-size:9pt;color:#6b7280;padding-right:20px">Preparado para:</td><td style="font-size:13pt;font-weight:bold">${qC||'—'}</td></tr>
+  <tr><td style="font-size:9pt;color:#6b7280">Fecha de entrega:</td><td style="font-size:11pt;font-weight:500">${dStr(qDD)}</td></tr>
+</table>
+<table style="border-collapse:collapse;width:100%;margin-bottom:16px;">
+  <thead><tr>
+    <th style="text-align:left;padding:7px 10px">Artículo</th>
+    <th>Tela</th><th>Audiencia</th><th>Deporte</th>
+    ${SIZES.map(s=>`<th>${s}</th>`).join('')}
+    <th>Cant.</th><th>P.U.</th><th style="text-align:right;padding-right:10px">Total</th>
+  </tr></thead>
+  <tbody>${rows}</tbody>
+</table>
+<table style="width:260px;margin-left:auto;border-collapse:collapse;margin-bottom:20px">
+  <tr><td style="padding:5px 10px;color:#6b7280;font-size:10pt">Total de piezas</td><td style="text-align:right;padding:5px 10px;font-weight:600">${items.reduce((s,i)=>s+qtyOf(i),0)}</td></tr>
+  <tr style="border-top:1px solid #e5e7eb"><td style="padding:9px 10px 3px;font-size:13pt;font-weight:bold">Total general</td><td style="text-align:right;padding:9px 10px 3px;font-size:14pt;font-weight:bold;color:#2563eb">${fmt(grand)}</td></tr>
+</table>
+<div style="background:#f9fafb;padding:10px 12px;border-radius:6px;font-size:9pt;color:#6b7280;margin-bottom:8px">
+  <b>Condiciones:</b> Precios por unidad · Cotización válida 30 días · No incluye IVU
 </div>
+</body></html>`;
+  const blob=new Blob([html],{type:'application/msword'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=`Cotizacion_${qN}.doc`;a.click();
+  URL.revokeObjectURL(url);
+}
 
-<div class="tabs">
-  <button class="tab active" onclick="showTab('data',this)">🏠 Data de Propiedad</button>
-  <button class="tab" onclick="showTab('rv',this)">⚖️ Renta vs Venta</button>
-  <button class="tab" onclick="showTab('saved',this)">💾 Guardados (<span id="savedCount">0</span>)</button>
-  <button class="tab" onclick="showTab('guia',this)">📋 Guía PR</button>
+function exportOrderToWord(order){
+  const dStr=d=>d?new Date(d+'T12:00:00').toLocaleDateString('es-PR',{year:'numeric',month:'long',day:'numeric'}):'—';
+  const pcs=order.items.reduce((s,i)=>s+qtyOf(i),0);
+  const itemsHtml=order.items.map((item,idx)=>`
+    <div style="margin-bottom:24px;padding-bottom:24px;${idx<order.items.length-1?'border-bottom:1px solid #e5e7eb':''}">
+      <table style="width:100%;margin-bottom:10px"><tr>
+        <td style="font-size:14pt;font-weight:bold">${item.garment}${item.color?` — ${item.color}`:''}</td>
+        <td style="text-align:right;font-size:10pt;color:#6b7280">Tela: ${item.fabric||'—'}${item.material?` · ${item.material}`:''}</td>
+      </tr></table>
+      <table style="border-collapse:collapse;width:100%;margin-bottom:10px">
+        <thead><tr>${SIZES.map(s=>`<th style="background:#1e3a5f;color:#fff;padding:6px 8px">${s}</th>`).join('')}<th style="background:#1e3a5f;color:#fff;padding:6px 8px">Total</th></tr></thead>
+        <tbody><tr style="text-align:center">
+          ${SIZES.map(s=>`<td style="padding:6px 8px;border:1px solid #e5e7eb;font-weight:${Number(item[s.toLowerCase()])>0?'bold':'normal'};color:${Number(item[s.toLowerCase()])>0?'#111':'#d1d5db'}">${Number(item[s.toLowerCase()])||'—'}</td>`).join('')}
+          <td style="padding:6px 8px;border:1px solid #e5e7eb;font-weight:bold;color:#2563eb">${qtyOf(item)}</td>
+        </tr></tbody>
+      </table>
+      <table style="width:auto"><tr>
+        <td style="padding-right:24px"><div style="font-size:9pt;color:#6b7280">Ubicación del logo</div><div style="font-size:11pt">${item.placement||'—'}</div></td>
+        <td><div style="font-size:9pt;color:#6b7280">Tamaño</div><div style="font-size:11pt">${item.placementSize||'—'}</div></td>
+      </tr></table>
+      ${item.notes?`<div style="margin-top:8px;background:#f9fafb;padding:8px 10px;border-radius:5px;font-size:10pt"><b style="color:#6b7280;font-size:9pt">Instrucciones:</b> ${item.notes}</div>`:''}
+    </div>`).join('');
+  const html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="utf-8"/><title>Ficha ${order.orderNum}</title>
+<style>body{font-family:Arial,sans-serif;font-size:12pt;color:#111;}table{border-collapse:collapse;}</style></head>
+<body>
+<table style="width:100%;margin-bottom:18px"><tr>
+  <td><span style="font-size:18pt;font-weight:bold;letter-spacing:2px">LEGACY UNIFORMS</span><br/>
+  <span style="font-size:9pt;color:#6b7280">Ficha técnica de producción</span></td>
+  <td style="text-align:right;vertical-align:top">
+    <div style="font-size:15pt;font-weight:bold">${order.orderNum}</div>
+    <div style="font-size:12pt;font-weight:500">${order.client||'—'}</div>
+    <div style="font-size:9pt;color:#6b7280">${dStr(order.date)}</div>
+  </td>
+</tr></table>
+<table style="width:auto;margin-bottom:16px;border-collapse:collapse">
+  <tr><td style="font-size:9pt;color:#6b7280;padding-right:20px;padding-bottom:5px">Fecha de entrega:</td><td style="font-size:12pt;font-weight:bold;color:#2563eb">${dStr(order.deliveryDate)}</td></tr>
+  <tr><td style="font-size:9pt;color:#6b7280">Total de piezas:</td><td style="font-size:12pt;font-weight:bold">${pcs}</td></tr>
+</table>
+<hr style="border:0;border-top:1px solid #e5e7eb;margin-bottom:18px"/>
+${itemsHtml}
+${order.notes?`<div style="margin-top:16px;padding:10px 12px;background:#f9fafb;border-radius:6px"><b style="font-size:9pt;color:#6b7280">Notas generales:</b><br/>${order.notes}</div>`:''}
+<div style="margin-top:20px;padding-top:10px;border-top:1px solid #e5e7eb;font-size:9pt;color:#9ca3af;display:flex;justify-content:space-between">
+  <span>LEGACY Uniforms · 787-249-0678 · santiago.emmanuel08@gmail.com</span>
+  <span>Total de piezas: <b>${pcs}</b></span>
 </div>
+</body></html>`;
+  const blob=new Blob([html],{type:'application/msword'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=`Orden_${order.orderNum}.doc`;a.click();
+  URL.revokeObjectURL(url);
+}
 
-<!-- ══ DATA DE PROPIEDAD ══ -->
-<div id="page-data" class="page active">
-  <div style="max-width:1200px;margin:0 auto;padding:20px;display:grid;grid-template-columns:320px 1fr;gap:20px">
-    <div>
-      <!-- COMPRA -->
-      <div class="sec">
-        <div class="sec-title"><span>🏷️</span><span>Información de Compra</span><div class="line"></div></div>
-        <div class="field"><label class="lbl">Precio de Compra</label><div class="inp-wrap"><span class="pre">$</span><input type="number" id="precio" value="0" oninput="calc()"/></div></div>
-        <div class="grid2">
-          <div class="field small"><label class="lbl">Pronto %</label><div class="inp-wrap"><span class="pre">%</span><input type="number" id="pronto" value="0" oninput="calc()"/></div></div>
-          <div class="field small"><label class="lbl">= Pronto $</label><div class="inp" style="color:#f59e0b;cursor:default" id="prontoDlr">$0</div></div>
-        </div>
-        <!-- Fecha compra -->
-        <div style="border-top:1px solid #1a1a2a;padding-top:12px;margin-top:4px;margin-bottom:4px">
-          <p style="font-size:9px;color:#f59e0b;font-weight:700;letter-spacing:.1em;margin-bottom:8px">FECHA DE COMPRA <span style="color:#3a3a5a;font-weight:400">— OPCIONAL</span></p>
-          <div class="grid2">
-            <div><label class="lbl">Mes de Compra</label>
-              <select id="mesCompra" class="inp" onchange="calc()">
-                <option value="0">— No aplica —</option>
-                <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
-                <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option>
-                <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
-                <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
-              </select>
-            </div>
-            <div><label class="lbl">Año de Compra</label>
-              <select id="anoCompra" class="inp" onchange="calc()">
-                <option value="0">— No aplica —</option>
-                <script>for(let y=2030;y>=2000;y--)document.write(`<option value="${y}">${y}</option>`)</script>
-              </select>
-            </div>
-          </div>
-          <div id="historial" style="display:none;margin-top:10px;background:#0a0f1a;border:1px solid #60a5fa30;border-radius:8px;padding:10px 12px">
-            <p style="font-size:9px;color:#5a7a9a;margin-bottom:8px">HISTORIAL DE PAGOS</p>
-            <div class="grid2">
-              <div><div class="sl" style="font-size:8px;color:#4a4a6a;margin-bottom:3px">PAGOS REALIZADOS</div><div style="font-size:13px;font-weight:800;color:#60a5fa" id="hPagos">—</div></div>
-              <div><div class="sl" style="font-size:8px;color:#4a4a6a;margin-bottom:3px">PAGO MENSUAL EST.</div><div style="font-size:13px;font-weight:800;color:#a78bfa" id="hPagoMes">—</div></div>
-              <div><div class="sl" style="font-size:8px;color:#4a4a6a;margin-bottom:3px">EQUITY ACUMULADO</div><div style="font-size:13px;font-weight:800;color:#22c55e" id="hEquity">—</div></div>
-              <div><div class="sl" style="font-size:8px;color:#4a4a6a;margin-bottom:3px">BALANCE PENDIENTE</div><div style="font-size:13px;font-weight:800;color:#f87171" id="hBalance">—</div></div>
-            </div>
-          </div>
-        </div>
-        <div class="grid3" style="margin-top:8px">
-          <div class="sbox"><div class="sl">HIPOTECA ORIGINAL</div><div class="sv" style="color:#60a5fa" id="s_hipoteca">$0</div></div>
-          <div class="sbox"><div class="sl">PAGO MENSUAL EST.</div><div class="sv" style="color:#a78bfa" id="s_pagoTotal">$0</div></div>
-          <div class="sbox"><div class="sl">CAPITAL TOTAL</div><div class="sv" style="color:#f59e0b" id="s_capitalTotal">$0</div></div>
-        </div>
+// ---- QUOTE VIEW ----
+function QuoteView({qC,setQC,qN,setQN,qD,setQD,qDD,setQDD,items,setItem,add,del,onPrev,onExport}){
+  const total=i=>qtyOf(i)*(Number(i.price)||0);
+  const grand=items.reduce((s,i)=>s+total(i),0);
+  const pcs=items.reduce((s,i)=>s+qtyOf(i),0);
+  return <div>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+      <div>
+        <div style={{fontSize:17,fontWeight:500}}>Nueva cotización</div>
+        <div style={{fontSize:12,color:'#6b7280',marginTop:2}}>Artículos, tallas y especificaciones</div>
       </div>
-
-      <!-- FINANCIAMIENTO -->
-      <div class="sec">
-        <div class="sec-title"><span>🏦</span><span>Financiamiento</span><div class="line"></div></div>
-        <div class="grid2">
-          <div class="field small"><label class="lbl">Plazo (años)</label><div class="inp-wrap"><input type="number" id="plazo" value="0" oninput="calc()"/></div></div>
-          <div class="field small"><label class="lbl">Tasa Interés %</label><div class="inp-wrap"><span class="pre">%</span><input type="number" id="tasa" value="0" oninput="calc()"/></div></div>
-        </div>
-        <label class="lbl">Tipo de Préstamo</label>
-        <div style="display:flex;gap:5px;margin-bottom:8px;flex-wrap:wrap">
-          <button class="tab-btn active" onclick="setTipoH('Convencional',this)">Convencional</button>
-          <button class="tab-btn" onclick="setTipoH('FHA',this)">FHA</button>
-          <button class="tab-btn" onclick="setTipoH('VA',this)">VA</button>
-          <button class="tab-btn" onclick="setTipoH('USDA',this)">USDA</button>
-        </div>
-        <p id="tipoHNote" style="font-size:10px;color:#4a5568;background:#0a0a14;border-radius:6px;padding:7px 10px">≥20% evita PMI. Sin seguro gubernamental.</p>
-      </div>
-
-      <!-- REPARACIONES -->
-      <div class="sec">
-        <div class="sec-title"><span>🔧</span><span>Reparaciones Estimadas</span><div class="line"></div></div>
-        <div class="field"><label class="lbl">Costo de Reparaciones <span style="color:#f59e0b;font-size:9px">★ Impacta el capital total</span></label><div class="inp-wrap"><span class="pre">$</span><input type="number" id="reparaciones" value="0" oninput="calc()"/></div></div>
-      </div>
-
-      <!-- GASTOS -->
-      <div class="sec">
-        <div class="sec-title"><span>📊</span><span>Gastos Mensuales</span><div class="line"></div></div>
-        <p style="font-size:9px;color:#f59e0b;margin-bottom:8px;font-weight:700">IMPUESTOS & SEGUROS</p>
-        <div id="erows-impuestos"></div>
-        <div id="autoFees" style="display:none"></div>
-        <p style="font-size:9px;color:#f59e0b;margin-top:10px;margin-bottom:8px;font-weight:700">UTILIDADES</p>
-        <div id="erows-util"></div>
-        <p style="font-size:9px;color:#f59e0b;margin-top:10px;margin-bottom:8px;font-weight:700">OPERACIÓN</p>
-        <div id="erows-op"></div>
+      <div style={{display:'flex',gap:8}}>
+        <Btn onClick={onExport} style={{background:'#f0fdf4',color:'#16a34a',fontWeight:500,border:'none'}}>⬇ Exportar Word</Btn>
+        <Btn onClick={onPrev} style={{background:'#eff6ff',color:'#2563eb',fontWeight:500,border:'none'}}>Ver cotización →</Btn>
       </div>
     </div>
 
-    <!-- RIGHT: Costos de Cierre -->
-    <div>
-      <div class="sec">
-        <div class="sec-title"><span>📄</span><span>Costos de Cierre — Auto-calculado (Puerto Rico)</span><div class="line"></div></div>
-        <div style="background:#080c08;border:2px solid #f59e0b30;border-radius:14px;overflow:hidden">
-          <div style="background:#0f120a;border-bottom:1px solid #2a2a1a;padding:16px 20px;display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
-            <div><p style="font-size:9px;color:#5a5a7a;margin-bottom:4px">TOTAL COSTOS DE CIERRE</p><p style="font-size:22px;font-weight:900;color:#f59e0b" id="cc_total">$0</p></div>
-            <div><p style="font-size:9px;color:#5a5a7a;margin-bottom:4px">% DEL PRECIO</p><p style="font-size:22px;font-weight:900;color:#c084fc" id="cc_pct">0.00%</p></div>
-            <div><p style="font-size:9px;color:#5a5a7a;margin-bottom:4px">PRONTO</p><p style="font-size:22px;font-weight:900;color:#60a5fa" id="cc_pronto">$0</p></div>
-            <div><p style="font-size:9px;color:#5a5a7a;margin-bottom:4px">CAPITAL TOTAL NECESARIO</p><p style="font-size:22px;font-weight:900;color:#22c55e" id="cc_capital">$0</p><p style="font-size:9px;color:#4a6a4a;margin-top:2px">Pronto + Cierre + Reparaciones</p></div>
-          </div>
-          <div style="padding:16px 20px" id="cc_items"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+    {/* Header info */}
+    <Card style={{marginBottom:12}}>
+      <Row cols="1fr 150px 150px 150px" mb={0}>
+        <Field label="Cliente"><input value={qC} onChange={e=>setQC(e.target.value)} placeholder="Nombre del cliente"/></Field>
+        <Field label="No. cotización"><input value={qN} onChange={e=>setQN(e.target.value)}/></Field>
+        <Field label="Fecha"><input type="date" value={qD} onChange={e=>setQD(e.target.value)}/></Field>
+        <Field label="Fecha de entrega"><input type="date" value={qDD} onChange={e=>setQDD(e.target.value)}/></Field>
+      </Row>
+    </Card>
 
-<!-- ══ RENTA VS VENTA ══ -->
-<div id="page-rv" class="page">
-  <div style="max-width:1200px;margin:0 auto;padding:20px">
-    <div class="grid2" style="margin-bottom:20px">
-      <!-- Renta -->
-      <div style="background:#090f09;border:2px solid #22c55e40;border-radius:14px;padding:18px 20px">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px"><span>🏠</span><span style="font-size:11px;color:#22c55e;letter-spacing:.12em;text-transform:uppercase;font-weight:700">Ingreso por Renta</span></div>
-        <div class="field small"><label class="lbl">Renta Mensual — Unidad 1</label><div class="inp-wrap"><span class="pre">$</span><input type="number" id="renta1" value="0" oninput="calc()"/></div></div>
-        <div id="renta2wrap" style="display:none" class="field small"><label class="lbl">Renta — Unidad 2</label><div class="inp-wrap"><span class="pre">$</span><input type="number" id="renta2" value="0" oninput="calc()"/></div></div>
-        <div id="renta3wrap" style="display:none" class="field small"><label class="lbl">Renta — Unidad 3</label><div class="inp-wrap"><span class="pre">$</span><input type="number" id="renta3" value="0" oninput="calc()"/></div></div>
-        <button id="addUnitBtn" onclick="addUnit()" style="background:transparent;border:1px dashed #22c55e40;color:#22c55e80;border-radius:6px;padding:5px 12px;font-size:10px;cursor:pointer;margin-bottom:10px;width:100%;font-family:monospace">+ Agregar Unidad</button>
-        <div style="height:1px;background:#1a2a1a;margin:12px 0"></div>
-        <div class="grid3">
-          <div class="sbox"><div class="sl">RENTA /MES</div><div class="sv" style="color:#22c55e" id="rv_rentaMes">$0</div></div>
-          <div class="sbox"><div class="sl">RENTA /AÑO</div><div class="sv" style="color:#22c55e" id="rv_rentaAno">$0</div></div>
-          <div class="sbox"><div class="sl">CASHFLOW /MES</div><div class="sv" id="rv_cf">$0</div></div>
-        </div>
+    {/* Items */}
+    {items.map((item,idx)=><Card key={item.id} style={{marginBottom:10}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+        <div style={{fontWeight:500,fontSize:13,color:'#374151'}}>Artículo {idx+1}</div>
+        {items.length>1&&<button onClick={()=>del(item.id)} style={{fontSize:11,background:'none',border:'none',cursor:'pointer',color:'#9ca3af'}}>Eliminar</button>}
       </div>
-      <!-- Venta -->
-      <div style="background:#0f0f09;border:2px solid #f59e0b40;border-radius:14px;padding:18px 20px">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px"><span>💵</span><span style="font-size:11px;color:#f59e0b;letter-spacing:.12em;text-transform:uppercase;font-weight:700">Ingreso por Venta (hoy)</span></div>
-        <div class="field"><label class="lbl">Precio de Venta</label><div class="inp-wrap"><span class="pre">$</span><input type="number" id="precioVenta" value="0" oninput="calc()"/></div></div>
-        <div class="grid2">
-          <div class="field small"><label class="lbl">Comisión Agente %</label><div class="inp-wrap"><span class="pre">%</span><input type="number" id="comision" value="0" oninput="calc()"/></div></div>
-          <div class="field small"><label class="lbl">Costos Cierre Venta $</label><div class="inp-wrap"><span class="pre">$</span><input type="number" id="cierreVenta" value="0" oninput="calc()"/></div></div>
-        </div>
-        <div class="field small"><label class="lbl">Deuda de Hipoteca <span id="deudaNote" style="color:#f59e0b;font-size:9px">★ auto desde data</span></label><div class="inp-wrap"><span class="pre">$</span><input type="number" id="deudaH" value="0" oninput="calc()"/></div></div>
-        <div style="height:1px;background:#2a2a1a;margin:12px 0"></div>
-        <div id="ventaDesglose"></div>
-        <div style="height:1px;background:#f59e0b30;margin:10px 0"></div>
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <span style="font-size:12px;color:#b0b0d0;font-weight:700">GANANCIA NETA HOY</span>
-          <span style="font-size:22px;font-weight:900;font-family:monospace" id="rv_ganHoy">$0</span>
-        </div>
-      </div>
-    </div>
 
-    <!-- Horizonte bar -->
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;background:#0d0d18;border:1px solid #1e1e2e;border-radius:10px;padding:12px 18px;flex-wrap:wrap">
-      <span style="font-size:10px;color:#5a5a7a;text-transform:uppercase;white-space:nowrap">Proyección renta a:</span>
-      <div id="horizBtns" style="display:flex;gap:6px"></div>
-      <div style="width:1px;height:20px;background:#1e1e2e"></div>
-      <span style="font-size:10px;color:#5a5a7a;text-transform:uppercase;white-space:nowrap">Apreciación anual:</span>
-      <div style="display:flex;background:#0a0a14;border:1px solid #1e1e2e;border-radius:6px;align-items:center;overflow:hidden;width:80px">
-        <input type="number" id="apreciacion" value="0" oninput="calc()" style="background:transparent;border:none;outline:none;color:#e0e0f0;font-size:13px;padding:5px 8px;width:100%;font-family:monospace;font-weight:700"/>
-        <span style="padding:0 6px;color:#3a3a5a;font-size:11px">%</span>
-      </div>
-    </div>
+      {/* Row 1: Nombre + precio */}
+      <Row cols="180px 90px 1fr 1fr" mb={10}>
+        <Field label="Artículo">
+          <select value={item.name} onChange={e=>setItem(item.id,'name',e.target.value)}>{CATALOG.map(c=><option key={c}>{c}</option>)}</select>
+        </Field>
+        <Field label="Precio u.">
+          <input type="number" value={item.price} onChange={e=>setItem(item.id,'price',e.target.value)} style={{textAlign:'center'}}/>
+        </Field>
+        <Field label="Tipo de tela">
+          <select value={item.fabric} onChange={e=>setItem(item.id,'fabric',e.target.value)}>{FABRICS.map(f=><option key={f}>{f}</option>)}</select>
+        </Field>
+        <Field label="Material / detalle adicional">
+          <input value={item.material} onChange={e=>setItem(item.id,'material',e.target.value)} placeholder="Ej: 100% poliéster reciclado..."/>
+        </Field>
+      </Row>
 
-    <!-- PITI -->
-    <div style="background:#0d0d18;border:1px solid #a78bfa40;border-radius:12px;padding:14px 18px;margin-bottom:20px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      {/* Row 2: Audiencia, reversible, deporte */}
+      <Row cols="140px 1fr 1fr" mb={10}>
+        <Field label="Audiencia">
+          <select value={item.audience} onChange={e=>setItem(item.id,'audience',e.target.value)}>
+            {['Adulto','Niño / Youth'].map(a=><option key={a}>{a}</option>)}
+          </select>
+        </Field>
         <div>
-          <p style="font-size:10px;color:#a78bfa;font-weight:700;letter-spacing:.1em;text-transform:uppercase">💳 Pago Mensual Estimado al Banco (PITI)</p>
-          <p style="font-size:9px;color:#4a4a6a;margin-top:3px">Editable — ingresa los valores reales si los tienes del banco. Dejar en 0 usa estimado PR.</p>
-        </div>
-        <p style="font-size:24px;font-weight:900;color:#a78bfa;font-family:monospace" id="piti_total">$0.00</p>
-      </div>
-      <div class="grid6">
-        <div style="background:#0a0a12;border-radius:8px;padding:10px 12px">
-          <p style="font-size:8px;color:#6a6a8a;margin-bottom:6px;text-transform:uppercase">P&I <span style="color:#3a3a5a">— auto</span></p>
-          <p style="font-size:16px;font-weight:900;color:#e0e0f0;font-family:monospace" id="piti_pi">$0.00</p>
-          <p style="font-size:8px;color:#3a3a5a;margin-top:3px">Precio, tasa y plazo</p>
-        </div>
-        <div style="background:#0a0a12;border-radius:8px;padding:10px 12px">
-          <p style="font-size:8px;color:#fb923c;margin-bottom:4px;text-transform:uppercase">Seg. Hogar /mes <span style="color:#3a3a5a;font-size:7px">est.$80-$150</span></p>
-          <div style="display:flex;background:#07070f;border:1px solid #fb923c30;border-radius:6px;align-items:center;overflow:hidden">
-            <span style="padding:0 6px;color:#5a3a2a;font-size:11px">$</span>
-            <input type="number" id="eHogar" value="0" oninput="calc()" style="background:transparent;border:none;outline:none;color:#fb923c;font-size:14px;padding:7px 4px;width:100%;font-family:monospace;font-weight:700"/>
+          <Lbl c="Opciones de prenda"/>
+          <div style={{display:'flex',gap:20,marginTop:4}}>
+            <label style={{display:'flex',alignItems:'center',gap:5,fontSize:13,cursor:'pointer'}}>
+              <input type="checkbox" checked={item.reversible} onChange={e=>setItem(item.id,'reversible',e.target.checked)} style={{width:'auto'}}/> Reversible
+            </label>
+            <label style={{display:'flex',alignItems:'center',gap:5,fontSize:13,cursor:'pointer'}}>
+              <input type="checkbox" checked={item.isSport} onChange={e=>setItem(item.id,'isSport',e.target.checked)} style={{width:'auto'}}/> Uniforme deportivo
+            </label>
           </div>
         </div>
-        <div style="background:#0a0a12;border-radius:8px;padding:10px 12px">
-          <p style="font-size:8px;color:#f59e0b;margin-bottom:4px;text-transform:uppercase">CRIM /mes <span style="color:#3a3a5a;font-size:7px">est.$80-$120</span></p>
-          <div style="display:flex;background:#07070f;border:1px solid #f59e0b30;border-radius:6px;align-items:center;overflow:hidden">
-            <span style="padding:0 6px;color:#5a4a2a;font-size:11px">$</span>
-            <input type="number" id="eCRIM" value="0" oninput="calc()" style="background:transparent;border:none;outline:none;color:#f59e0b;font-size:14px;padding:7px 4px;width:100%;font-family:monospace;font-weight:700"/>
+        {item.isSport&&<Field label="Deporte">
+          <select value={item.sport} onChange={e=>setItem(item.id,'sport',e.target.value)}>{SPORTS.map(s=><option key={s}>{s}</option>)}</select>
+        </Field>}
+      </Row>
+
+      {/* Tallas */}
+      <div style={{marginBottom:8}}>
+        <Lbl c="Cantidades por talla"/>
+        <div style={{display:'flex',gap:7,flexWrap:'wrap',alignItems:'flex-end'}}>
+          {SIZES.map(s=><div key={s} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:3}}>
+            <div style={{fontSize:11,fontWeight:500,color:'#6b7280'}}>{s}</div>
+            <input type="number" min={0} value={item[s.toLowerCase()]} onChange={e=>setItem(item.id,s.toLowerCase(),e.target.value)} style={{width:50,textAlign:'center'}}/>
+          </div>)}
+          <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:3,marginLeft:6}}>
+            <div style={{fontSize:11,fontWeight:500,color:'#6b7280'}}>Total</div>
+            <div style={{width:50,height:34,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:600,fontSize:15,color:'#2563eb'}}>{qtyOf(item)}</div>
           </div>
-        </div>
-        <div style="background:#0a0a12;border-radius:8px;padding:10px 12px">
-          <p style="font-size:8px;color:#f59e0b;margin-bottom:4px;text-transform:uppercase">Huracán /mes <span style="color:#3a3a5a;font-size:7px">est.$200-$400</span></p>
-          <div style="display:flex;background:#07070f;border:1px solid #f59e0b30;border-radius:6px;align-items:center;overflow:hidden">
-            <span style="padding:0 6px;color:#5a4a2a;font-size:11px">$</span>
-            <input type="number" id="eHuracan" value="0" oninput="calc()" style="background:transparent;border:none;outline:none;color:#f59e0b;font-size:14px;padding:7px 4px;width:100%;font-family:monospace;font-weight:700"/>
-          </div>
-        </div>
-        <div style="background:#0a0a12;border-radius:8px;padding:10px 12px">
-          <p style="font-size:8px;color:#60a5fa;margin-bottom:4px;text-transform:uppercase">Inundación /mes <span style="color:#3a3a5a;font-size:7px">est.$60-$150</span></p>
-          <div style="display:flex;background:#07070f;border:1px solid #60a5fa30;border-radius:6px;align-items:center;overflow:hidden">
-            <span style="padding:0 6px;color:#2a3a5a;font-size:11px">$</span>
-            <input type="number" id="eInundacion" value="0" oninput="calc()" style="background:transparent;border:none;outline:none;color:#60a5fa;font-size:14px;padding:7px 4px;width:100%;font-family:monospace;font-weight:700"/>
-          </div>
-        </div>
-        <div style="background:#0a0a12;border-radius:8px;padding:10px 12px">
-          <p style="font-size:8px;color:#f87171;margin-bottom:4px;text-transform:uppercase" id="eMIPLabel">FHA MIP /mes <span style="color:#3a3a5a;font-size:7px">— auto</span></p>
-          <div style="display:flex;background:#07070f;border:1px solid #f8717130;border-radius:6px;align-items:center;overflow:hidden">
-            <span style="padding:0 6px;color:#5a2a2a;font-size:11px">$</span>
-            <input type="number" id="eMIP" value="0" oninput="calc()" style="background:transparent;border:none;outline:none;color:#f87171;font-size:14px;padding:7px 4px;width:100%;font-family:monospace;font-weight:700"/>
-          </div>
+          <div style={{marginLeft:8,fontSize:14,fontWeight:500,color:'#2563eb',paddingBottom:4}}>{fmt(total(item))}</div>
         </div>
       </div>
-      <p style="font-size:9px;color:#3a3a5a;margin-top:10px">⚠ Estimados basados en promedios de PR. Edita con los valores reales que te provea el banco.</p>
-    </div>
+    </Card>)}
 
-    <!-- Métricas -->
-    <div class="sec">
-      <div class="sec-title"><span>📈</span><span>Análisis de Inversión</span><div class="line"></div></div>
-      <div class="grid4" id="metrics1"></div>
-      <div class="grid4" id="metrics2"></div>
-      <div class="grid2" id="rules"></div>
-    </div>
+    <button onClick={add} style={{width:'100%',padding:'9px',borderRadius:10,border:'0.5px dashed #d1d5db',background:'none',fontSize:12,color:'#6b7280',cursor:'pointer',marginBottom:12}}>+ Agregar artículo</button>
 
-    <div style="height:1px;background:#1a1a2a;margin:4px 0 20px"></div>
-
-    <!-- Ganador -->
-    <div style="display:flex;justify-content:center;margin-bottom:20px">
-      <div id="winner" style="border-radius:14px;padding:16px 48px;text-align:center">
-        <p style="font-size:10px;color:#5a5a7a;letter-spacing:.12em;margin-bottom:6px" id="winnerLabel">—</p>
-        <p style="font-size:22px;font-weight:900" id="winnerVal">—</p>
-        <p style="font-size:11px;color:#5a5a7a;margin-top:4px" id="winnerDiff">—</p>
+    <div style={{display:'flex',justifyContent:'flex-end'}}>
+      <div style={{background:'#fff',border:'0.5px solid #e5e7eb',borderRadius:10,padding:'12px 18px',minWidth:200}}>
+        {[['Artículos',items.length],['Piezas',pcs]].map(([l,v])=><div key={l} style={{display:'flex',justifyContent:'space-between',gap:40,fontSize:12,color:'#6b7280',marginBottom:6}}><span>{l}</span><span style={{fontWeight:500,color:'#111'}}>{v}</span></div>)}
+        <div style={{borderTop:'0.5px solid #e5e7eb',paddingTop:8,display:'flex',justifyContent:'space-between',fontSize:15,fontWeight:500}}><span>Total</span><span style={{color:'#2563eb',fontSize:17}}>{fmt(grand)}</span></div>
       </div>
     </div>
+  </div>;
+}
 
-    <!-- Renta vs Venta cards -->
-    <div class="grid2" style="margin-bottom:20px">
-      <div style="background:#090f09;border:2px solid #22c55e40;border-radius:14px;padding:20px">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px"><span style="font-size:18px">🏠</span><h3 style="font-size:14px;font-weight:900;color:#22c55e">RENTAR</h3><span style="font-size:10px;background:#22c55e20;color:#22c55e;padding:2px 10px;border-radius:20px" id="rentaLabel">5 años</span></div>
-        <div class="grid2" style="margin-bottom:14px" id="rentaCards"></div>
-        <div style="background:#0d1a0d;border:1px solid #22c55e30;border-radius:10px;padding:14px 16px">
-          <p style="font-size:10px;color:#5a7a5a;margin-bottom:4px">RETORNO TOTAL</p>
-          <p style="font-size:26px;font-weight:900;color:#22c55e;font-family:monospace" id="totRenta">$0</p>
-          <p style="font-size:10px;color:#4a6a4a;margin-top:4px">Cashflow + Equity + Apreciación</p>
-        </div>
-      </div>
-      <div style="background:#0f0f09;border:2px solid #f59e0b40;border-radius:14px;padding:20px">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px"><span style="font-size:18px">💵</span><h3 style="font-size:14px;font-weight:900;color:#f59e0b" id="ventaTitle">VENDER EN 5 AÑOS</h3></div>
-        <div class="grid2" style="margin-bottom:14px" id="ventaCards"></div>
-        <div style="background:#1a1a0d;border:1px solid #f59e0b30;border-radius:10px;padding:14px 16px">
-          <p style="font-size:10px;color:#7a7a5a;margin-bottom:4px" id="ventaTotalLabel">GANANCIA NETA SI VENDES</p>
-          <p style="font-size:26px;font-weight:900;color:#f59e0b;font-family:monospace" id="totVenta">$0</p>
-        </div>
+// ---- QUOTE PREVIEW ----
+function QuotePrev({qC,qN,qD,qDD,items,onBack,onExport}){
+  const total=i=>qtyOf(i)*(Number(i.price)||0);
+  const grand=items.reduce((s,i)=>s+total(i),0);
+  const pcs=items.reduce((s,i)=>s+qtyOf(i),0);
+  const dStr=d=>d?new Date(d+'T12:00:00').toLocaleDateString('es-PR',{year:'numeric',month:'long',day:'numeric'}):'—';
+  return <div>
+    <div className="no-print" style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+      <Btn onClick={onBack}>← Editar</Btn>
+      <div style={{display:'flex',gap:8}}>
+        <Btn onClick={onExport} style={{background:'#f0fdf4',color:'#16a34a',fontWeight:500,border:'none'}}>⬇ Exportar Word</Btn>
+        <Btn onClick={()=>window.print()} style={{fontWeight:500}}>Imprimir / PDF</Btn>
       </div>
     </div>
-
-    <!-- Tabla -->
-    <div style="background:#0d0d18;border:1px solid #1e1e2e;border-radius:14px;overflow:hidden">
-      <div style="padding:13px 20px;border-bottom:1px solid #1e1e2e">
-        <span style="font-size:11px;color:#b0b0d0;letter-spacing:.1em;text-transform:uppercase;font-weight:700">📅 Proyección Año por Año</span>
+    <Card>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',paddingBottom:14,borderBottom:'0.5px solid #e5e7eb',marginBottom:14}}>
+        <div>
+          <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
+            <div style={{width:32,height:32,background:'#1e3a5f',borderRadius:7,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,fontSize:14,color:'#fff'}}>L</div>
+            <div style={{fontSize:17,fontWeight:700,letterSpacing:'.07em'}}>LEGACY UNIFORMS</div>
+          </div>
+          <div style={{fontSize:11,color:'#6b7280'}}>787-249-0678  ·  santiago.emmanuel08@gmail.com</div>
+        </div>
+        <div style={{textAlign:'right'}}>
+          <div style={{fontSize:17,fontWeight:700,color:'#2563eb'}}>{qN}</div>
+          <div style={{fontSize:11,color:'#6b7280',marginTop:3}}>{dStr(qD)}</div>
+        </div>
       </div>
-      <div style="overflow-x:auto">
-        <table style="width:100%;border-collapse:collapse" id="proyTable">
-          <thead><tr style="background:#0a0a14">
-            <th style="padding:10px 14px;font-size:9px;color:#5a5a7a;letter-spacing:.08em;text-transform:uppercase;text-align:right;white-space:nowrap">Año</th>
-            <th style="padding:10px 14px;font-size:9px;color:#5a5a7a;letter-spacing:.08em;text-transform:uppercase;text-align:right;white-space:nowrap">CF Acumulado</th>
-            <th style="padding:10px 14px;font-size:9px;color:#5a5a7a;letter-spacing:.08em;text-transform:uppercase;text-align:right;white-space:nowrap">Equity Pagado</th>
-            <th style="padding:10px 14px;font-size:9px;color:#5a5a7a;letter-spacing:.08em;text-transform:uppercase;text-align:right;white-space:nowrap">Valor Propiedad</th>
-            <th style="padding:10px 14px;font-size:9px;color:#5a5a7a;letter-spacing:.08em;text-transform:uppercase;text-align:right;white-space:nowrap">Deuda Restante</th>
-            <th style="padding:10px 14px;font-size:9px;color:#5a5a7a;letter-spacing:.08em;text-transform:uppercase;text-align:right;white-space:nowrap">Ganancia si Vendes</th>
-            <th style="padding:10px 14px;font-size:9px;color:#5a5a7a;letter-spacing:.08em;text-transform:uppercase;text-align:right;white-space:nowrap">Total Renta*</th>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:16}}>
+        <div><div style={{fontSize:11,color:'#6b7280',marginBottom:2}}>Preparado para</div><div style={{fontSize:15,fontWeight:600}}>{qC||'—'}</div></div>
+        <div><div style={{fontSize:11,color:'#6b7280',marginBottom:2}}>Fecha de entrega</div><div style={{fontSize:14,fontWeight:600,color:'#2563eb'}}>{dStr(qDD)}</div></div>
+      </div>
+      <div style={{border:'0.5px solid #e5e7eb',borderRadius:8,overflow:'hidden',marginBottom:14,overflowX:'auto'}}>
+        <table style={{width:'100%',borderCollapse:'collapse',fontSize:12,minWidth:700}}>
+          <thead><tr style={{background:'#1e3a5f'}}>
+            {['Artículo','Tela','Audiencia','Deporte',...SIZES,'Cant.','P.U.','Total'].map(h=><th key={h} style={{padding:'7px 8px',textAlign:h==='Artículo'?'left':h==='Total'?'right':'center',fontWeight:500,fontSize:11,color:'#fff',whiteSpace:'nowrap'}}>{h}</th>)}
           </tr></thead>
-          <tbody id="proyBody"></tbody>
+          <tbody>
+            {items.map((item,idx)=>{const q=qtyOf(item);const t=total(item);return(
+              <tr key={item.id} style={{borderTop:'0.5px solid #e5e7eb',background:idx%2?'#f9fafb':'#fff'}}>
+                <td style={{padding:'7px 10px',fontWeight:500,whiteSpace:'nowrap'}}>{item.name}{item.reversible?<span style={{fontSize:10,background:'#eff6ff',color:'#2563eb',padding:'1px 5px',borderRadius:4,marginLeft:5}}>REV</span>:''}</td>
+                <td style={{padding:'7px 6px',textAlign:'center',whiteSpace:'nowrap'}}>{item.fabric}</td>
+                <td style={{padding:'7px 6px',textAlign:'center',whiteSpace:'nowrap'}}>{item.audience}</td>
+                <td style={{padding:'7px 6px',textAlign:'center',color:item.isSport?'#111':'#d1d5db',whiteSpace:'nowrap'}}>{item.isSport?item.sport:'—'}</td>
+                {SIZES.map(s=><td key={s} style={{padding:'7px 5px',textAlign:'center',color:Number(item[s.toLowerCase()])>0?'#111':'#d1d5db'}}>{Number(item[s.toLowerCase()])||'—'}</td>)}
+                <td style={{padding:'7px 8px',textAlign:'center',fontWeight:600}}>{q}</td>
+                <td style={{padding:'7px 8px',textAlign:'center',color:'#6b7280'}}>{fmt(item.price)}</td>
+                <td style={{padding:'7px 10px',textAlign:'right',fontWeight:600,color:'#2563eb'}}>{fmt(t)}</td>
+              </tr>
+            );})}
+          </tbody>
         </table>
       </div>
-      <p style="padding:8px 18px;font-size:9px;color:#3a3a5a">* Total Renta = Cashflow + Equity + Apreciación. Proyección estimada.</p>
+      <div style={{display:'flex',justifyContent:'flex-end'}}>
+        <div style={{minWidth:230}}>
+          <div style={{display:'flex',justifyContent:'space-between',padding:'5px 0',fontSize:12,color:'#6b7280',borderBottom:'0.5px solid #e5e7eb'}}><span>Total de piezas</span><span style={{fontWeight:600,color:'#111'}}>{pcs}</span></div>
+          <div style={{display:'flex',justifyContent:'space-between',padding:'9px 0 0',fontSize:15,fontWeight:600}}><span>Total general</span><span style={{color:'#2563eb',fontSize:17}}>{fmt(grand)}</span></div>
+        </div>
+      </div>
+      <div style={{marginTop:16,padding:'9px 12px',background:'#f9fafb',borderRadius:8,fontSize:11,color:'#6b7280'}}>
+        <strong>Condiciones:</strong> Precios por unidad · Cotización válida 30 días · No incluye IVU
+      </div>
+    </Card>
+  </div>;
+}
+
+// ---- LOGISTICS LIST ----
+function LogList({orders,onNew,onEdit,onDel,onView}){
+  return <div>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+      <div>
+        <div style={{fontSize:17,fontWeight:500}}>Órdenes de producción</div>
+        <div style={{fontSize:12,color:'#6b7280',marginTop:2}}>Fichas técnicas para la fábrica</div>
+      </div>
+      <Btn onClick={onNew} style={{background:'#eff6ff',color:'#2563eb',fontWeight:500,border:'none'}}>+ Nueva orden</Btn>
     </div>
-  </div>
-</div>
+    {orders.length===0
+      ?<Card style={{textAlign:'center',padding:'2.5rem 2rem'}}>
+        <div style={{fontSize:14,color:'#6b7280',marginBottom:6}}>No hay órdenes creadas</div>
+        <div style={{fontSize:12,color:'#9ca3af'}}>Crea una orden para enviar especificaciones a la fábrica</div>
+      </Card>
+      :<div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(240px,1fr))',gap:10}}>
+        {orders.map(o=>{
+          const pcs=o.items.reduce((s,i)=>s+qtyOf(i),0);
+          const dStr=d=>d?new Date(d+'T12:00:00').toLocaleDateString('es-PR',{month:'short',day:'numeric',year:'numeric'}):'Sin fecha';
+          return <Card key={o.id} style={{display:'flex',flexDirection:'column',gap:10}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+              <div><div style={{fontWeight:500,fontSize:14}}>{o.client||'Sin cliente'}</div><div style={{fontSize:11,color:'#6b7280',marginTop:2}}>{o.orderNum}</div></div>
+              <div style={{fontSize:11,background:'#f3f4f6',color:'#6b7280',padding:'3px 8px',borderRadius:6,whiteSpace:'nowrap'}}>{dStr(o.date)}</div>
+            </div>
+            {o.deliveryDate&&<div style={{fontSize:11,background:'#eff6ff',color:'#2563eb',padding:'3px 8px',borderRadius:5,display:'inline-block',width:'fit-content'}}>Entrega: {dStr(o.deliveryDate)}</div>}
+            <div style={{fontSize:12,color:'#6b7280'}}>{o.items.length} {o.items.length===1?'artículo':'artículos'} · {pcs} piezas</div>
+            <div style={{display:'flex',gap:6,marginTop:2}}>
+              <Btn onClick={()=>onView(o)} style={{flex:1,background:'#eff6ff',color:'#2563eb',fontWeight:500,border:'none',textAlign:'center'}}>Ver ficha</Btn>
+              <Btn onClick={()=>onEdit(o)} style={{flex:1,textAlign:'center'}}>Editar</Btn>
+              <Btn onClick={()=>onDel(o.id)} style={{padding:'7px 10px',color:'#9ca3af'}}>×</Btn>
+            </div>
+          </Card>;
+        })}
+      </div>}
+  </div>;
+}
 
-<!-- ══ GUARDADOS ══ -->
-<div id="page-saved" class="page">
-  <div style="padding:20px" id="savedList">
-    <div style="text-align:center;padding:60px 20px;color:#3a3a5a">
-      <p style="font-size:36px;margin-bottom:12px">💾</p>
-      <p>No hay análisis guardados. Ingresa la data y presiona GUARDAR.</p>
+// ---- ORDER FORM ----
+function OrderForm({order,setCO,onSave,onCancel}){
+  const set=(f,v)=>setCO(p=>({...p,[f]:v}));
+  const setI=(id,f,v)=>setCO(p=>({...p,items:p.items.map(i=>i.id===id?{...i,[f]:v}:i)}));
+  return <div>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+      <Btn onClick={onCancel}>← Cancelar</Btn>
+      <Btn onClick={onSave} style={{background:'#f0fdf4',color:'#16a34a',fontWeight:500,border:'none'}}>Guardar orden</Btn>
     </div>
-  </div>
-</div>
+    <Card style={{marginBottom:12}}>
+      <div style={{fontSize:14,fontWeight:500,marginBottom:10}}>Información de la orden</div>
+      <Row cols="1fr 170px 150px 160px" mb={0}>
+        <Field label="Cliente"><input value={order.client} onChange={e=>set('client',e.target.value)} placeholder="Nombre del cliente"/></Field>
+        <Field label="No. de orden"><input value={order.orderNum} onChange={e=>set('orderNum',e.target.value)}/></Field>
+        <Field label="Fecha"><input type="date" value={order.date} onChange={e=>set('date',e.target.value)}/></Field>
+        <Field label="Fecha de entrega"><input type="date" value={order.deliveryDate} onChange={e=>set('deliveryDate',e.target.value)}/></Field>
+      </Row>
+    </Card>
 
-<!-- ══ GUÍA PR ══ -->
-<div id="page-guia" class="page">
-  <div style="padding:20px;max-width:880px;margin:0 auto">
-    <div class="grid2">
-      <div style="background:#0d0d18;border:1px solid #1e1e2e;border-radius:12px;padding:14px 16px"><p style="font-size:11px;font-weight:800;color:#f59e0b;margin-bottom:6px">🏛️ CRIM / Contribuciones</p><p style="font-size:10px;color:#6a6a8a;line-height:1.7">Impuesto municipal. Varía por municipio y tasación. Exención residencia principal ~$15,000. Promedio inversión: $800-$2,500/año.</p></div>
-      <div style="background:#0d0d18;border:1px solid #1e1e2e;border-radius:12px;padding:14px 16px"><p style="font-size:11px;font-weight:800;color:#f59e0b;margin-bottom:6px">🌀 Seguro Huracán</p><p style="font-size:10px;color:#6a6a8a;line-height:1.7">Esencial en PR. Temporada jun-nov. El prestamista lo requiere. Promedio $200-$400/mes según zona y valor.</p></div>
-      <div style="background:#0d0d18;border:1px solid #1e1e2e;border-radius:12px;padding:14px 16px"><p style="font-size:11px;font-weight:800;color:#f59e0b;margin-bottom:6px">🌊 Seguro Inundación NFIP</p><p style="font-size:10px;color:#6a6a8a;line-height:1.7">Obligatorio en zonas FEMA. Promedio PR: $60-$150/mes. Verifica mapa de zonas antes de comprar.</p></div>
-      <div style="background:#0d0d18;border:1px solid #1e1e2e;border-radius:12px;padding:14px 16px"><p style="font-size:11px;font-weight:800;color:#f59e0b;margin-bottom:6px">📄 Costos de Cierre PR</p><p style="font-size:10px;color:#6a6a8a;line-height:1.7">3-6% financiado. Notario (1%≤$150k / 0.5% resto), registro, sellos, title insurance, tasación, origination fee, prepagados.</p></div>
-      <div style="background:#0d0d18;border:1px solid #1e1e2e;border-radius:12px;padding:14px 16px"><p style="font-size:11px;font-weight:800;color:#f59e0b;margin-bottom:6px">🏦 Bancos Locales PR</p><p style="font-size:10px;color:#6a6a8a;line-height:1.7">Banco Popular, FirstBank, Oriental Bank. Promedio costos de cierre PR: $7,601 (2024). Tasas 30yr: ~6.31%.</p></div>
-      <div style="background:#0d0d18;border:1px solid #1e1e2e;border-radius:12px;padding:14px 16px"><p style="font-size:11px;font-weight:800;color:#f59e0b;margin-bottom:6px">📊 Métricas Meta PR</p><p style="font-size:10px;color:#6a6a8a;line-height:1.7">Cap Rate ≥8% excelente. Cash on Cash ≥8% = meta. DSCR ≥1.25x = bancos. GRM ≤10x. Cashflow positivo = prioridad.</p></div>
-      <div style="background:#0d0d18;border:1px solid #1e1e2e;border-radius:12px;padding:14px 16px"><p style="font-size:11px;font-weight:800;color:#f59e0b;margin-bottom:6px">🏠 Vacancia PR</p><p style="font-size:10px;color:#6a6a8a;line-height:1.7">5-8% áreas urbanas. 10-15% zonas rurales o turísticas. Tiempo promedio alquiler: 2-4 semanas.</p></div>
-      <div style="background:#0d0d18;border:1px solid #1e1e2e;border-radius:12px;padding:14px 16px"><p style="font-size:11px;font-weight:800;color:#f59e0b;margin-bottom:6px">⚖️ Ley 60 / Incentivos</p><p style="font-size:10px;color:#6a6a8a;line-height:1.7">4% impuesto corporativo, 0% dividendos/ganancias de capital. Requiere 183 días residencia. Consulta CPA.</p></div>
-      <div style="background:#0d0d18;border:1px solid #1e1e2e;border-radius:12px;padding:14px 16px"><p style="font-size:11px;font-weight:800;color:#f59e0b;margin-bottom:6px">🔑 Property Management</p><p style="font-size:10px;color:#6a6a8a;line-height:1.7">8-10% de renta bruta. Recomendado si no resides en PR. Verifica licencia con DACO.</p></div>
-      <div style="background:#0d0d18;border:1px solid #1e1e2e;border-radius:12px;padding:14px 16px"><p style="font-size:11px;font-weight:800;color:#f59e0b;margin-bottom:6px">📐 Reglas Generales</p><p style="font-size:10px;color:#6a6a8a;line-height:1.7">Regla 50%: gastos operativos ~50% renta bruta. Regla 1%: renta mensual ≥1% precio compra.</p></div>
+    {order.items.map((item,idx)=><Card key={item.id} style={{marginBottom:12}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+        <div style={{fontWeight:500,fontSize:14}}>Artículo {idx+1}</div>
+        {order.items.length>1&&<button onClick={()=>setCO(p=>({...p,items:p.items.filter(i=>i.id!==item.id)}))} style={{fontSize:11,background:'none',border:'none',cursor:'pointer',color:'#9ca3af'}}>Eliminar</button>}
+      </div>
+      <Row cols="1fr 1fr 1fr" mb={10}>
+        <Field label="Tipo de prenda"><select value={item.garment} onChange={e=>setI(item.id,'garment',e.target.value)}>{CATALOG.map(c=><option key={c}>{c}</option>)}</select></Field>
+        <Field label="Color"><input value={item.color} onChange={e=>setI(item.id,'color',e.target.value)} placeholder="Ej: Negro, Rojo..."/></Field>
+        <Field label="Tipo de tela"><select value={item.fabric} onChange={e=>setI(item.id,'fabric',e.target.value)}>{FABRICS.map(f=><option key={f}>{f}</option>)}</select></Field>
+      </Row>
+      <Row cols="1fr 1fr" mb={10}>
+        <Field label="Material / detalle adicional"><input value={item.material} onChange={e=>setI(item.id,'material',e.target.value)} placeholder="Ej: 100% poliéster, gramaje 180g..."/></Field>
+        <div/>
+      </Row>
+      <Row cols="1fr 1fr" mb={10}>
+        <ImgUp value={item.productImg} onChange={v=>setI(item.id,'productImg',v)} label="Imagen del producto / referencia"/>
+        <ImgUp value={item.logo} onChange={v=>setI(item.id,'logo',v)} label="Logo / diseño a aplicar"/>
+      </Row>
+      <div style={{marginBottom:10}}>
+        <Lbl c="Cantidades por talla"/>
+        <div style={{display:'flex',gap:7,flexWrap:'wrap',alignItems:'flex-end'}}>
+          {SIZES.map(s=><div key={s} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:3}}>
+            <div style={{fontSize:11,fontWeight:500,color:'#6b7280'}}>{s}</div>
+            <input type="number" min={0} value={item[s.toLowerCase()]} onChange={e=>setI(item.id,s.toLowerCase(),e.target.value)} style={{width:50,textAlign:'center'}}/>
+          </div>)}
+          <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:3,marginLeft:6}}>
+            <div style={{fontSize:11,fontWeight:500,color:'#6b7280'}}>Total</div>
+            <div style={{width:50,height:34,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:600,fontSize:15,color:'#2563eb'}}>{qtyOf(item)}</div>
+          </div>
+        </div>
+      </div>
+      <Row cols="1fr 140px" mb={10}>
+        <Field label="Ubicación del logo"><input value={item.placement} onChange={e=>setI(item.id,'placement',e.target.value)} placeholder="Ej: Frente pecho izquierdo"/></Field>
+        <Field label="Tamaño del logo"><input value={item.placementSize} onChange={e=>setI(item.id,'placementSize',e.target.value)} placeholder="Ej: 5 cm"/></Field>
+      </Row>
+      <Field label="Instrucciones especiales para la fábrica"><textarea value={item.notes} onChange={e=>setI(item.id,'notes',e.target.value)} placeholder="Ej: Logo bordado, hilo dorado, no serigrafía..." rows={2} style={{resize:'vertical'}}/></Field>
+    </Card>)}
+
+    <button onClick={()=>setCO(p=>({...p,items:[...p.items,newOI()]}))} style={{width:'100%',padding:'9px',borderRadius:10,border:'0.5px dashed #d1d5db',background:'none',fontSize:12,color:'#6b7280',cursor:'pointer',marginBottom:12}}>+ Agregar otro artículo</button>
+    <Card><Field label="Notas generales de la orden"><textarea value={order.notes} onChange={e=>setCO(p=>({...p,notes:e.target.value}))} placeholder="Notas adicionales para la fábrica..." rows={3} style={{resize:'vertical'}}/></Field></Card>
+  </div>;
+}
+
+// ---- ORDER PREVIEW ----
+function OrderPrev({order,onBack,onExport}){
+  const pcs=order.items.reduce((s,i)=>s+qtyOf(i),0);
+  const dStr=d=>d?new Date(d+'T12:00:00').toLocaleDateString('es-PR',{year:'numeric',month:'long',day:'numeric'}):'—';
+  return <div>
+    <div className="no-print" style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+      <Btn onClick={onBack}>← Volver</Btn>
+      <div style={{display:'flex',gap:8}}>
+        <Btn onClick={onExport} style={{background:'#f0fdf4',color:'#16a34a',fontWeight:500,border:'none'}}>⬇ Exportar Word</Btn>
+        <Btn onClick={()=>window.print()} style={{fontWeight:500}}>Imprimir / PDF</Btn>
+      </div>
     </div>
-    <p style="text-align:center;font-size:9px;color:#2a2a4a;margin-top:16px">⚠ Herramienta educativa. Consulta agente licenciado, CPA y abogado antes de invertir.</p>
-  </div>
-</div>
-
-<style>
-.tab-btn{background:#0d0d18;color:#6a6a9a;border:1px solid #252535;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;font-weight:700;font-family:monospace}
-.tab-btn.active{background:#f59e0b;color:#07070f;border-color:#f59e0b}
-</style>
-
-<script>
-// ── STATE ──
-var state = {
-  tipoH:'Convencional', units:1, horizonte:5, saved:[],
-  gastoFields:[
-    {id:'crim',label:'CRIM / Contribuciones',pr:true},
-    {id:'seguro',label:'Seguro Hazard'},
-    {id:'huracan',label:'Seguro Huracán',pr:true},
-    {id:'inundacion',label:'Seguro Inundación NFIP',pr:true},
-    {id:'hoa',label:'HOA'},
-  ],
-  utilFields:[
-    {id:'agua',label:'Agua / Alcantarillado'},
-    {id:'elec',label:'Gas / Electricidad'},
-    {id:'internet',label:'Internet'},
-  ],
-  opFields:[
-    {id:'basura',label:'Basura'},
-    {id:'jardineria',label:'Jardinería'},
-    {id:'admin',label:'Administración PM'},
-    {id:'mant',label:'Mantenimiento'},
-    {id:'vacancia',label:'Vacancia'},
-    {id:'extra',label:'Gasto Extra / Reserva'},
-  ]
-};
-
-// ── HELPERS ──
-function fmt(n){return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',minimumFractionDigits:0,maximumFractionDigits:0}).format(n||0)}
-function fmtD(n){return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',minimumFractionDigits:2}).format(n||0)}
-function fmtP(n){return ((n||0).toFixed(2))+'%'}
-function v(id){return parseFloat(document.getElementById(id)&&document.getElementById(id).value)||0}
-function t(id,val){var el=document.getElementById(id);if(el)el.textContent=val}
-function s(id,val){var el=document.getElementById(id);if(el)el.style.color=val}
-function sc(n){return n>=10?'#22c55e':n>=5?'#f59e0b':'#ef4444'}
-
-function calcPI(p,r,y){
-  if(!p||!r||!y)return 0;
-  var m=r/100/12,n=y*12;
-  if(m===0)return p/n;
-  return p*m*Math.pow(1+m,n)/(Math.pow(1+m,n)-1);
+    <Card>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',paddingBottom:14,borderBottom:'0.5px solid #e5e7eb',marginBottom:14}}>
+        <div>
+          <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
+            <div style={{width:32,height:32,background:'#1e3a5f',borderRadius:7,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,fontSize:14,color:'#fff'}}>L</div>
+            <div style={{fontSize:17,fontWeight:700,letterSpacing:'.07em'}}>LEGACY UNIFORMS</div>
+          </div>
+          <div style={{fontSize:11,color:'#6b7280'}}>Ficha técnica de producción</div>
+        </div>
+        <div style={{textAlign:'right'}}>
+          <div style={{fontSize:16,fontWeight:700}}>{order.orderNum}</div>
+          <div style={{fontSize:14,fontWeight:500,marginTop:2}}>{order.client||'—'}</div>
+          <div style={{fontSize:11,color:'#6b7280'}}>{dStr(order.date)}</div>
+        </div>
+      </div>
+      {order.deliveryDate&&<div style={{display:'inline-block',background:'#eff6ff',color:'#2563eb',padding:'5px 12px',borderRadius:6,fontSize:12,fontWeight:600,marginBottom:14}}>Fecha de entrega: {dStr(order.deliveryDate)}</div>}
+      {order.items.map((item,idx)=>{const t=qtyOf(item);return(
+        <div key={item.id} style={{marginBottom:idx<order.items.length-1?20:0,paddingBottom:idx<order.items.length-1?20:0,borderBottom:idx<order.items.length-1?'0.5px solid #e5e7eb':'none'}}>
+          <div style={{display:'flex',gap:18,flexWrap:'wrap'}}>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:7,width:196,flexShrink:0}}>
+              {['productImg','logo'].map((field,fi)=><div key={field}>
+                <div style={{fontSize:11,color:'#6b7280',marginBottom:3}}>{fi===0?'Producto':'Logo'}</div>
+                {item[field]?<img src={item[field]} alt={field} style={{width:'100%',height:88,objectFit:'contain',border:'0.5px solid #e5e7eb',borderRadius:7,background:'#f9fafb'}}/>
+                  :<div style={{width:'100%',height:88,border:'0.5px solid #e5e7eb',borderRadius:7,background:'#f9fafb',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,color:'#d1d5db'}}>Sin imagen</div>}
+              </div>)}
+            </div>
+            <div style={{flex:1,minWidth:200}}>
+              <div style={{display:'flex',alignItems:'baseline',gap:8,marginBottom:8,flexWrap:'wrap'}}>
+                <div style={{fontSize:15,fontWeight:600}}>{item.garment}</div>
+                {item.color&&<span style={{fontSize:12,color:'#6b7280'}}>{item.color}</span>}
+                <span style={{fontSize:11,background:'#f3f4f6',color:'#374141',padding:'2px 7px',borderRadius:4}}>{item.fabric}</span>
+                {item.material&&<span style={{fontSize:11,color:'#9ca3af'}}>{item.material}</span>}
+              </div>
+              <div style={{border:'0.5px solid #e5e7eb',borderRadius:7,overflow:'hidden',marginBottom:8}}>
+                <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
+                  <thead><tr style={{background:'#f9fafb'}}>{SIZES.map(s=><th key={s} style={{padding:'5px 7px',textAlign:'center',fontWeight:500,fontSize:11,color:'#6b7280'}}>{s}</th>)}<th style={{padding:'5px 7px',textAlign:'center',fontWeight:500,fontSize:11,color:'#6b7280'}}>Total</th></tr></thead>
+                  <tbody><tr>{SIZES.map(s=><td key={s} style={{padding:'5px 7px',textAlign:'center',fontWeight:Number(item[s.toLowerCase()])>0?600:400,color:Number(item[s.toLowerCase()])>0?'#111':'#d1d5db'}}>{Number(item[s.toLowerCase()])||'—'}</td>)}<td style={{padding:'5px 7px',textAlign:'center',fontWeight:600,color:'#2563eb'}}>{t}</td></tr></tbody>
+                </table>
+              </div>
+              <div style={{display:'flex',gap:16,flexWrap:'wrap',marginBottom:item.notes?8:0}}>
+                <div><div style={{fontSize:11,color:'#6b7280',marginBottom:2}}>Ubicación del logo</div><div style={{fontSize:12}}>{item.placement||'—'}</div></div>
+                {item.placementSize&&<div><div style={{fontSize:11,color:'#6b7280',marginBottom:2}}>Tamaño</div><div style={{fontSize:12}}>{item.placementSize}</div></div>}
+              </div>
+              {item.notes&&<div style={{padding:'6px 10px',background:'#f9fafb',borderRadius:7,fontSize:12,marginTop:4}}><span style={{fontWeight:500,color:'#6b7280',fontSize:11}}>Instrucciones: </span>{item.notes}</div>}
+            </div>
+          </div>
+        </div>
+      );})}
+      {order.notes&&<div style={{marginTop:14,padding:'10px 12px',background:'#f9fafb',borderRadius:8}}><div style={{fontSize:11,fontWeight:500,color:'#6b7280',marginBottom:3}}>Notas generales</div><div style={{fontSize:12}}>{order.notes}</div></div>}
+      <div style={{marginTop:16,paddingTop:12,borderTop:'0.5px solid #e5e7eb',display:'flex',justifyContent:'space-between',fontSize:11,color:'#9ca3af'}}>
+        <span>LEGACY Uniforms · 787-249-0678 · santiago.emmanuel08@gmail.com</span>
+        <span>Total de piezas: <strong style={{color:'#111'}}>{pcs}</strong></span>
+      </div>
+    </Card>
+  </div>;
 }
 
-function calcCC(precio,hipoteca,tipoH){
-  var items=[];
-  var notario=precio<=150000?precio*0.01:150000*0.01+(precio-150000)*0.005;
-  items.push({cat:'Legal & Notarial',label:'Honorarios Notario/Abogado',amount:notario,note:'1% ≤$150k / 0.5% resto'});
-  var reg=precio<=25000?50:50+Math.ceil((precio-25000)/1000)*4;
-  items.push({cat:'Gobierno PR',label:'Registro de la Propiedad',amount:reg,note:'$50 + $4 x $1k adicional'});
-  items.push({cat:'Gobierno PR',label:'Sello Rentas Internas',amount:Math.round(precio/2)/100+1,note:'Precio/2 + $1'});
-  items.push({cat:'Gobierno PR',label:'Sello Asistencia Legal',amount:Math.round(Math.ceil(precio/50000)*5/2),note:'$5 x cada $50k'});
-  items.push({cat:'Gobierno PR',label:'Sello Notarial',amount:1,note:'Fijo $1.00'});
-  items.push({cat:'Gobierno PR',label:'Electronic Filing (ARPE)',amount:20,note:'Fijo'});
-  items.push({cat:'Título & Seguro',label:'Title Insurance (Loan Policy)',amount:hipoteca*0.004,note:'~0.4% del préstamo'});
-  items.push({cat:'Título & Seguro',label:'Estudio de Título',amount:350,note:'Estimado fijo'});
-  items.push({cat:'Banco / Préstamo',label:'Tasación (Appraisal)',amount:450,note:'$350-$600 típico en PR'});
-  items.push({cat:'Banco / Préstamo',label:'Origination Fee',amount:hipoteca*0.0075,note:'~0.75% del préstamo'});
-  items.push({cat:'Banco / Préstamo',label:'Reporte de Crédito',amount:65,note:'Estimado fijo'});
-  items.push({cat:'Banco / Préstamo',label:'Underwriting Fee',amount:650,note:'Estimado fijo'});
-  items.push({cat:'Prepagados (Escrow)',label:'Seguro de Hogar Prepagado (2 meses)',amount:precio*0.0055/12*2,note:'~0.55%/año × 2 meses'});
-  items.push({cat:'Prepagados (Escrow)',label:'CRIM Prepagado (2 meses)',amount:precio*0.0083/12*2,note:'~1% anual × 2 meses'});
-  if(tipoH==='FHA')items.push({cat:'Seguro Gubernamental',label:'FHA Upfront MIP (UFMIP)',amount:hipoteca*0.0175,note:'1.75% — puede financiarse'});
-  if(tipoH==='VA')items.push({cat:'Seguro Gubernamental',label:'VA Funding Fee',amount:hipoteca*0.0215,note:'2.15% primera vez'});
-  if(tipoH==='USDA')items.push({cat:'Seguro Gubernamental',label:'USDA Guarantee Fee',amount:hipoteca*0.01,note:'1% del préstamo'});
-  var total=items.reduce(function(s,i){return s+i.amount},0);
-  return {items:items,total:total};
+// ---- APP ROOT ----
+function App(){
+  const [view,setView]=useState('quote');
+  const [qC,setQC]=useState('');const [qN,setQN]=useState('COT-2026-001');
+  const [qD,setQD]=useState(today());const [qDD,setQDD]=useState('');
+  const [qItems,setQItems]=useState([newQI()]);
+  const [orders,setOrders]=useState([]);const [curOrd,setCurOrd]=useState(null);
+
+  const setQItem=(id,f,v)=>setQItems(p=>p.map(i=>{if(i.id!==id)return i;const u={...i,[f]:v};if(f==='name')u.price=DEF[v]??0;return u;}));
+  const saveOrd=()=>{if(!curOrd)return;setOrders(p=>{const idx=p.findIndex(o=>o.id===curOrd.id);if(idx>=0){const n=[...p];n[idx]=curOrd;return n;}return[...p,curOrd];});setView('logistics');setCurOrd(null);};
+  const isQ=['quote','quote-prev'].includes(view);const isL=['logistics','order-form','order-prev'].includes(view);
+
+  const exportQuote=()=>exportQuoteToWord({qC,qN,qD,qDD,items:qItems});
+  const exportOrd=()=>{if(curOrd)exportOrderToWord(curOrd);};
+
+  return <div style={{fontFamily:'system-ui,-apple-system,sans-serif',color:'#111',minHeight:600,background:'#f5f5f4'}}>
+    <div className="no-print" style={{background:'#fff',borderBottom:'0.5px solid #e5e7eb',padding:'0 16px',display:'flex',alignItems:'center',justifyContent:'space-between',height:50,position:'sticky',top:0,zIndex:10}}>
+      <div style={{display:'flex',alignItems:'center',gap:8}}>
+        <div style={{width:30,height:30,background:'#1e3a5f',borderRadius:7,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,fontSize:13,color:'#fff'}}>L</div>
+        <div>
+          <div style={{fontWeight:700,fontSize:13,letterSpacing:'.07em'}}>LEGACY UNIFORMS</div>
+          <div style={{fontSize:9,color:'#9ca3af',letterSpacing:'.05em'}}>SISTEMA DE GESTIÓN</div>
+        </div>
+      </div>
+      <nav style={{display:'flex',gap:4}}>
+        {[['quote','Cotización',isQ],['logistics','Logística',isL]].map(([v,label,active])=>
+          <button key={v} onClick={()=>setView(v)} style={{padding:'5px 13px',borderRadius:7,border:'0.5px solid',borderColor:active?'#9ca3af':'#e5e7eb',background:active?'#f3f4f6':'transparent',fontSize:12,fontWeight:active?500:400,cursor:'pointer',color:active?'#111':'#6b7280'}}>{label}</button>
+        )}
+      </nav>
+    </div>
+    <div style={{maxWidth:940,margin:'0 auto',padding:14}}>
+      {view==='quote'&&<QuoteView qC={qC} setQC={setQC} qN={qN} setQN={setQN} qD={qD} setQD={setQD} qDD={qDD} setQDD={setQDD} items={qItems} setItem={setQItem} add={()=>setQItems(p=>[...p,newQI()])} del={id=>setQItems(p=>p.filter(i=>i.id!==id))} onPrev={()=>setView('quote-prev')} onExport={exportQuote}/>}
+      {view==='quote-prev'&&<QuotePrev qC={qC} qN={qN} qD={qD} qDD={qDD} items={qItems} onBack={()=>setView('quote')} onExport={exportQuote}/>}
+      {view==='logistics'&&<LogList orders={orders} onNew={()=>{setCurOrd(newOrd());setView('order-form');}} onEdit={o=>{setCurOrd(JSON.parse(JSON.stringify(o)));setView('order-form');}} onDel={id=>setOrders(p=>p.filter(o=>o.id!==id))} onView={o=>{setCurOrd(o);setView('order-prev');}}/>}
+      {view==='order-form'&&curOrd&&<OrderForm order={curOrd} setCO={setCurOrd} onSave={saveOrd} onCancel={()=>{setView('logistics');setCurOrd(null);}}/>}
+      {view==='order-prev'&&curOrd&&<OrderPrev order={curOrd} onBack={()=>setView('logistics')} onExport={exportOrd}/>}
+    </div>
+  </div>;
 }
-
-// ── INIT EXPENSE ROWS ──
-function initRows(){
-  function makeRow(f,container){
-    var d=document.createElement('div');d.className='erow';
-    d.innerHTML='<span class="elbl">'+f.label+(f.pr?'<span style="color:#f59e0b;font-size:9px;margin-left:4px">PR</span>':'')+'</span>'+
-      '<div class="einp"><span style="padding:0 5px;color:#3a3a5a;font-size:11px">$</span><input type="number" id="'+f.id+'" value="0" oninput="calc()"/></div>'+
-      '<div class="epct" id="pct_'+f.id+'">0.0%</div>';
-    container.appendChild(d);
-  }
-  var c1=document.getElementById('erows-impuestos');
-  state.gastoFields.forEach(function(f){makeRow(f,c1)});
-  var c2=document.getElementById('erows-util');
-  state.utilFields.forEach(function(f){makeRow(f,c2)});
-  var c3=document.getElementById('erows-op');
-  state.opFields.forEach(function(f){makeRow(f,c3)});
-  // Horizon buttons
-  var hb=document.getElementById('horizBtns');
-  [3,5,10,15,20].forEach(function(y){
-    var b=document.createElement('button');
-    b.textContent=y+' años';b.style.cssText='border:1px solid #1e1e2e;border-radius:6px;padding:5px 14px;font-size:11px;cursor:pointer;font-weight:800;font-family:monospace';
-    b.onclick=function(){state.horizonte=y;updateHorizBtns();calc()};
-    hb.appendChild(b);
-  });
-  updateHorizBtns();
-}
-
-function updateHorizBtns(){
-  var btns=document.getElementById('horizBtns').children;
-  var years=[3,5,10,15,20];
-  for(var i=0;i<btns.length;i++){
-    if(years[i]===state.horizonte){btns[i].style.background='#f59e0b';btns[i].style.color='#07070f';btns[i].style.borderColor='#f59e0b'}
-    else{btns[i].style.background='#0a0a14';btns[i].style.color='#6a6a9a';btns[i].style.borderColor='#1e1e2e'}
-  }
-}
-
-// ── MAIN CALC ──
-function calc(){
-  var precio=v('precio'),pronto=v('pronto'),plazo=v('plazo'),tasa=v('tasa');
-  var tipoH=state.tipoH;
-  var prontoDlr=precio*pronto/100;
-  var hipoteca=precio-prontoDlr;
-  var cc=calcCC(precio,hipoteca,tipoH);
-  var reparaciones=v('reparaciones');
-  var capitalTotal=prontoDlr+cc.total+reparaciones;
-  var pAndI=calcPI(hipoteca,tasa,plazo);
-  var pmi=tipoH==='Convencional'&&pronto<20?hipoteca*0.0055/12:0;
-  var mip=tipoH==='FHA'?hipoteca*0.0055/12:0;
-  var usda=tipoH==='USDA'?hipoteca*0.0035/12:0;
-
-  // PITI
-  var eH=v('eHogar'),eC=v('eCRIM'),eHu=v('eHuracan'),eI=v('eInundacion'),eM=v('eMIP');
-  var escHogar=eH>0?eH:Math.round(precio*0.011/12);
-  var escCRIM=eC>0?eC:Math.round(precio*0.0095/12);
-  var escHuracan=eHu>0?eHu:Math.round(precio*0.0286/12);
-  var escInundacion=eI>0?eI:Math.round(precio*0.01/12);
-  var escMIP=eM>0?eM:(mip+pmi+usda);
-  var pagoTotal=pAndI+escHogar+escCRIM+escHuracan+escInundacion+escMIP;
-
-  // Balance restante
-  var mesCompra=parseInt(document.getElementById('mesCompra').value)||0;
-  var anoCompra=parseInt(document.getElementById('anoCompra').value)||0;
-  var balRest=hipoteca,pagosReal=0,equity=0;
-  var tieneH=mesCompra>0&&anoCompra>0;
-  if(tieneH){
-    var inicio=new Date(anoCompra,mesCompra-1,1),hoy=new Date();
-    var meses=Math.max(0,(hoy.getFullYear()-inicio.getFullYear())*12+(hoy.getMonth()-inicio.getMonth()));
-    pagosReal=Math.min(meses,plazo*12);
-    var r2=tasa/100/12,n2=plazo*12;
-    if(r2>0&&pagosReal>0)balRest=Math.max(hipoteca*(Math.pow(1+r2,n2)-Math.pow(1+r2,pagosReal))/(Math.pow(1+r2,n2)-1),0);
-    equity=hipoteca-balRest;
-  }
-
-  // Ingresos
-  var renta1=v('renta1'),renta2=v('renta2'),renta3=v('renta3');
-  var rentaBruta=renta1+renta2+renta3;
-  var rentaAnual=rentaBruta*12;
-
-  // Gastos
-  var allFields=state.gastoFields.concat(state.utilFields).concat(state.opFields);
-  var gastos=allFields.reduce(function(s,f){return s+(v(f.id)||0)},0);
-  gastos+=pmi+mip+usda;
-
-  // Métricas
-  var noim=rentaBruta-gastos;
-  var noia=noim*12;
-  var capRate=precio>0?noia/precio*100:0;
-  var cfm=noim-pAndI;
-  var cfa=cfm*12;
-  var coc=capitalTotal>0?cfa/capitalTotal*100:0;
-  var pctG=rentaBruta>0?gastos/rentaBruta*100:0;
-  var dscr=pAndI>0?noim/pAndI:0;
-  var grm=rentaAnual>0?precio/rentaAnual:0;
-  var r50=gastos<=rentaBruta*0.5;
-  var r1=rentaBruta>=precio*0.01;
-
-  // Renta vs Venta
-  var precioVenta=v('precioVenta'),comision=v('comision'),cierreVenta=v('cierreVenta'),deudaH=v('deudaH'),apreciacion=v('apreciacion');
-  var comDlr=precioVenta*comision/100;
-  var ganHoy=precioVenta-comDlr-cierreVenta-deudaH;
-  var r=tasa/100/12;
-  var bal=balRest,cumCF=0,cumEq=0,rows=[];
-  for(var yr=1;yr<=Math.max(state.horizonte,1);yr++){
-    for(var m=0;m<12;m++){
-      var int=bal*r,pri=Math.max(pAndI-int,0);
-      cumEq+=pri;bal=Math.max(bal-pri,0);cumCF+=cfm;
-    }
-    var vAno=precio*Math.pow(1+apreciacion/100,yr);
-    var gV=vAno-(vAno*comision/100)-cierreVenta-bal;
-    rows.push({yr:yr,cumCF:Math.round(cumCF),cumEq:Math.round(cumEq),vAno:Math.round(vAno),bal:Math.round(bal),gV:Math.round(gV),totR:Math.round(cumCF+cumEq+(vAno-precio))});
-  }
-  var last=rows[rows.length-1]||{};
-  var totR=last.totR||0,totV=last.gV||0;
-  var winner=totR>=totV?'renta':'venta';
-
-  // ── UPDATE DOM ──
-  // Data tab
-  t('prontoDlr',fmt(prontoDlr));
-  t('s_hipoteca',fmt(hipoteca));
-  t('s_pagoTotal',fmtD(pagoTotal));
-  t('s_capitalTotal',fmt(capitalTotal));
-  // Historial
-  document.getElementById('historial').style.display=tieneH?'block':'none';
-  if(tieneH){t('hPagos',pagosReal+' meses');t('hPagoMes',fmtD(pagoTotal));t('hEquity',fmt(equity));t('hBalance',fmt(balRest));}
-  // Closing costs
-  t('cc_total',fmt(cc.total));
-  t('cc_pct',precio>0?fmtP(cc.total/precio*100):'0.00%');
-  t('cc_pronto',fmt(prontoDlr));
-  t('cc_capital',fmt(capitalTotal));
-  renderCC(cc);
-  // Auto-fees display
-  var af=document.getElementById('autoFees');
-  af.innerHTML='';af.style.display='none';
-  if(pmi>0||mip>0||usda>0){
-    af.style.display='block';
-    if(pmi>0)af.innerHTML+='<div style="display:flex;justify-content:space-between;background:#0a0a14;border-radius:6px;padding:7px 10px;margin-bottom:7px"><span style="font-size:11px;color:#f59e0b">PMI (auto)</span><span style="font-size:11px;font-weight:700;color:#f59e0b">'+fmtD(pmi)+'</span></div>';
-    if(mip>0)af.innerHTML+='<div style="display:flex;justify-content:space-between;background:#0a0a14;border-radius:6px;padding:7px 10px;margin-bottom:7px"><span style="font-size:11px;color:#f87171">FHA MIP (auto)</span><span style="font-size:11px;font-weight:700;color:#f87171">'+fmtD(mip)+'</span></div>';
-    if(usda>0)af.innerHTML+='<div style="display:flex;justify-content:space-between;background:#0a0a14;border-radius:6px;padding:7px 10px;margin-bottom:7px"><span style="font-size:11px;color:#f87171">USDA Fee (auto)</span><span style="font-size:11px;font-weight:700;color:#f87171">'+fmtD(usda)+'</span></div>';
-  }
-  // Expense pct
-  allFields.forEach(function(f){
-    var el=document.getElementById('pct_'+f.id);
-    if(el)el.textContent=rentaBruta>0?fmtP((v(f.id)||0)/rentaBruta*100):'0.0%';
-  });
-  // PITI
-  t('piti_total',fmtD(pagoTotal));
-  t('piti_pi',fmtD(pAndI));
-  var mipLabel=tipoH==='FHA'?'FHA MIP /mes':tipoH==='VA'?'VA Funding':tipoH==='USDA'?'USDA Fee /mes':'PMI /mes';
-  t('eMIPLabel',mipLabel+' <span style="color:#3a3a5a;font-size:7px">— auto</span>');
-  // Renta panel
-  t('rv_rentaMes',fmtD(rentaBruta));
-  t('rv_rentaAno',fmt(rentaAnual));
-  t('rv_cf',fmtD(cfm));
-  s('rv_cf',cfm>=0?'#22c55e':'#ef4444');
-  // Venta panel
-  var vd=document.getElementById('ventaDesglose');
-  vd.innerHTML=[['Precio de Venta',fmt(precioVenta),'#e0e0f0'],['− Comisión Agente','−'+fmt(comDlr),'#ef4444'],['− Costos de Cierre','−'+fmt(cierreVenta),'#ef4444'],['− Deuda Hipoteca','−'+fmt(deudaH),'#ef4444']].map(function(r){
-    return '<div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:11px;color:#5a5a7a">'+r[0]+'</span><span style="font-size:12px;font-weight:700;color:'+r[2]+';font-family:monospace">'+r[1]+'</span></div>';
-  }).join('');
-  t('rv_ganHoy',fmt(ganHoy));
-  s('rv_ganHoy',ganHoy>=0?'#22c55e':'#ef4444');
-  // Auto-sync deuda if not manually edited
-  var dEl=document.getElementById('deudaH');
-  if(dEl&&!dEl.dataset.manual){dEl.value=Math.round(balRest)}
-  // Metricas
-  renderMetrics(noim,noia,capRate,cfm,cfa,coc,dscr,grm,pctG,capitalTotal,pagoTotal,pAndI);
-  // Rules
-  renderRules(r50,r1,pctG,rentaBruta,precio,gastos);
-  // Winner
-  renderWinner(winner,totR,totV);
-  // Renta/Venta cards
-  renderRentaCards(cfm,cfa,last,precio,apreciacion);
-  renderVentaCards(last,comision,cierreVenta);
-  // Table
-  renderTable(rows);
-  // Labels
-  t('rentaLabel',state.horizonte+' años');
-  t('ventaTitle','VENDER EN '+state.horizonte+' AÑOS');
-  t('ventaTotalLabel','GANANCIA NETA SI VENDES EN '+state.horizonte+' AÑOS');
-  t('totRenta',fmt(totR));
-  t('totVenta',fmt(totV));
-  // store for save
-  state.lastCalc={precio,prontoDlr,hipoteca,capitalTotal,pAndI,pagoTotal,rentaBruta,rentaAnual,gastos,noim,noia,capRate,cfm,cfa,coc,pctG,dscr,grm,r50,r1,cc,balRest,equity};
-}
-
-function renderCC(cc){
-  var cats={},catColors={'Legal & Notarial':'#a78bfa','Gobierno PR':'#f59e0b','Título & Seguro':'#60a5fa','Banco / Préstamo':'#34d399','Prepagados (Escrow)':'#fb923c','Seguro Gubernamental':'#f87171'};
-  cc.items.forEach(function(i){if(!cats[i.cat])cats[i.cat]=[];cats[i.cat].push(i);});
-  var html='';
-  Object.keys(cats).forEach(function(cat){
-    var col=catColors[cat]||'#6a6a8a';
-    var tot=cats[cat].reduce(function(s,i){return s+i.amount},0);
-    html+='<div style="margin-bottom:18px"><div style="display:flex;justify-content:space-between;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid '+col+'30"><span style="font-size:10px;font-weight:700;color:'+col+';letter-spacing:.1em;text-transform:uppercase">'+cat+'</span><span style="font-size:12px;font-weight:800;color:'+col+'">'+fmt(tot)+'</span></div>';
-    cats[cat].forEach(function(item){
-      html+='<div style="display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:6px"><div><span style="font-size:12px;color:#c0c0d8">'+item.label+'</span><span style="font-size:9px;color:#4a4a6a;margin-left:8px">'+item.note+'</span></div><span style="font-size:13px;font-weight:700;color:#e0e0f0;font-family:monospace">'+fmtD(item.amount)+'</span></div>';
-    });
-    html+='</div>';
-  });
-  html+='<p style="font-size:9px;color:#3a3a5a;text-align:center">⚠ Estimado. Confirma cifras con tu notario y banco.</p>';
-  document.getElementById('cc_items').innerHTML=html;
-}
-
-function renderMetrics(noim,noia,capRate,cfm,cfa,coc,dscr,grm,pctG,capitalTotal,pagoTotal,pAndI){
-  var cfCol=cfm>=0?'#22c55e':'#ef4444';
-  function card(label,val,sub,color,badge,lg){
-    return '<div style="background:#0d0d18;border:1px solid '+color+'30;border-radius:12px;padding:'+(lg?'18px 20px':'13px 15px')+'">'
-      +'<p style="font-size:9px;color:#5a5a7a;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px">'+label+'</p>'
-      +'<p style="font-size:'+(lg?22:18)+'px;font-weight:900;color:'+color+';font-family:monospace;line-height:1">'+val+'</p>'
-      +(sub?'<p style="font-size:10px;color:#4a4a6a;margin-top:5px">'+sub+'</p>':'')
-      +(badge?'<span style="display:inline-block;margin-top:6px;background:'+color+'20;color:'+color+';font-size:9px;padding:2px 8px;border-radius:20px">'+badge+'</span>':'')
-      +'</div>';
-  }
-  document.getElementById('metrics1').innerHTML=
-    card('NOI Mensual',fmtD(noim),'Anual: '+fmt(noia),'#f59e0b','',true)+
-    card('Cap Rate',fmtP(capRate),'NOI / Precio compra',sc(capRate),capRate>=8?'🔥 Excelente':capRate>=5?'Bueno':'Bajo')+
-    card('Cash on Cash',fmtP(coc),'Cashflow / Capital inv.',sc(coc),coc>=8?'🔥 Excelente':'')+
-    card('Cashflow Mensual',fmtD(cfm),'Anual: '+fmt(cfa),cfCol,'');
-  document.getElementById('metrics2').innerHTML=
-    card('DSCR',dscr.toFixed(2)+'x','NOI / P&I (banco ≥1.25x)',dscr>=1.25?'#22c55e':'#ef4444',dscr>=1.25?'✓ Apto':'⚠ Bajo')+
-    card('GRM',grm.toFixed(1)+'x','Precio / Renta anual (≤10)',grm<=10?'#22c55e':grm<=14?'#f59e0b':'#ef4444','')+
-    card('Gastos / Renta',fmtP(pctG),'Sin hipoteca (meta ≤50%)',pctG<=50?'#22c55e':'#ef4444','')+
-    card('Capital Total',fmt(capitalTotal),'Pronto + Cierre + Reparaciones','#a78bfa','');
-}
-
-function renderRules(r50,r1,pctG,rentaBruta,precio,gastos){
-  function rule(label,pass,desc){
-    return '<div style="background:#0d0d18;border:1px solid '+(pass?'#22c55e30':'#ef444430')+';border-radius:10px;padding:12px 16px">'
-      +'<div style="display:flex;align-items:center;gap:7px;margin-bottom:5px"><span style="width:7px;height:7px;border-radius:50%;background:'+(pass?'#22c55e':'#ef4444')+';display:inline-block"></span>'
-      +'<span style="font-size:11px;font-weight:700;color:'+(pass?'#22c55e':'#ef4444')+'">'+label+' — '+(pass?'✓ CUMPLE':'✗ NO CUMPLE')+'</span></div>'
-      +'<p style="font-size:10px;color:#5a5a7a">'+desc+'</p></div>';
-  }
-  document.getElementById('rules').innerHTML=
-    rule('Regla del 50%',r50,'Gastos '+fmtP(pctG)+' de renta. Límite: '+fmtD(rentaBruta*0.5)+'/mes')+
-    rule('Regla del 1%',r1,'Renta '+fmtD(rentaBruta)+'/mes vs 1% precio = '+fmtD(parseFloat(document.getElementById('precio').value)||0 * 0.01)+'/mes');
-}
-
-function renderWinner(winner,totR,totV){
-  var col=winner==='renta'?'#22c55e':'#f59e0b';
-  var w=document.getElementById('winner');
-  w.style.background=winner==='renta'?'#0a1a0a':'#1a1a0a';
-  w.style.border='2px solid '+col;
-  t('winnerLabel','ESTRATEGIA GANADORA EN '+state.horizonte+' AÑOS');
-  t('winnerVal',(winner==='renta'?'🏠 RENTAR':'💵 VENDER'));
-  s('winnerVal',col);
-  t('winnerDiff','Diferencia: '+fmt(Math.abs(totR-totV))+' a favor de '+(winner==='renta'?'rentar':'vender'));
-}
-
-function renderRentaCards(cfm,cfa,last,precio,apreciacion){
-  var cfCol=cfm>=0?'#22c55e':'#ef4444';
-  function mini(l,v,c){return '<div style="background:#0d0d18;border-radius:8px;padding:10px 12px"><p style="font-size:9px;color:#4a4a6a;margin-bottom:4px">'+l+'</p><p style="font-size:14px;font-weight:800;color:'+c+';font-family:monospace">'+v+'</p></div>'}
-  document.getElementById('rentaCards').innerHTML=
-    mini('Cashflow Mensual',fmtD(cfm),cfCol)+
-    mini('Cashflow Anual',fmt(cfa),cfCol)+
-    mini('Cashflow '+state.horizonte+' años',fmt(last.cumCF||0),cfCol)+
-    mini('Equity Acumulado',fmt(last.cumEq||0),'#60a5fa')+
-    mini('Valor Futuro',fmt(last.vAno||0),'#c084fc')+
-    mini('Apreciación',fmt((last.vAno||0)-precio),'#c084fc');
-}
-
-function renderVentaCards(last,comision,cierreVenta){
-  function mini(l,v,c){return '<div style="background:#0d0d18;border-radius:8px;padding:10px 12px"><p style="font-size:9px;color:#4a4a6a;margin-bottom:4px">'+l+'</p><p style="font-size:14px;font-weight:800;color:'+c+';font-family:monospace">'+v+'</p></div>'}
-  var gv=last.gV||0;
-  document.getElementById('ventaCards').innerHTML=
-    mini('Valor en '+state.horizonte+' años',fmt(last.vAno||0),'#c084fc')+
-    mini('Deuda Restante',fmt(last.bal||0),'#ef4444')+
-    mini('Comisión',fmt((last.vAno||0)*comision/100),'#ef4444')+
-    mini('Ganancia Neta Futura',fmt(gv),gv>=0?'#22c55e':'#ef4444');
-}
-
-function renderTable(rows){
-  var html='';
-  rows.forEach(function(row,i){
-    var bg=i%2===0?'#0d0d18':'#0a0a12';
-    var gvCol=row.gV>=0?'#22c55e':'#ef4444';
-    var cfCol=row.cumCF>=0?'#22c55e':'#ef4444';
-    html+='<tr style="border-top:1px solid #12121e;background:'+bg+'">'
-      +'<td style="padding:9px 14px;font-size:12px;color:#f59e0b;font-weight:700;text-align:right">'+row.yr+'</td>'
-      +'<td style="padding:9px 14px;font-size:12px;color:'+cfCol+';text-align:right;font-family:monospace">'+fmt(row.cumCF)+'</td>'
-      +'<td style="padding:9px 14px;font-size:12px;color:#60a5fa;text-align:right;font-family:monospace">'+fmt(row.cumEq)+'</td>'
-      +'<td style="padding:9px 14px;font-size:12px;color:#c084fc;text-align:right;font-family:monospace">'+fmt(row.vAno)+'</td>'
-      +'<td style="padding:9px 14px;font-size:12px;color:#ef4444;text-align:right;font-family:monospace">'+fmt(row.bal)+'</td>'
-      +'<td style="padding:9px 14px;font-size:12px;color:'+gvCol+';text-align:right;font-family:monospace;font-weight:700">'+fmt(row.gV)+'</td>'
-      +'<td style="padding:9px 14px;font-size:12px;color:#f59e0b;text-align:right;font-family:monospace;font-weight:700">'+fmt(row.totR)+'</td>'
-      +'</tr>';
-  });
-  document.getElementById('proyBody').innerHTML=html;
-}
-
-// ── TABS ──
-function showTab(id,btn){
-  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active')});
-  document.querySelectorAll('.tab').forEach(function(b){b.classList.remove('active')});
-  document.getElementById('page-'+id).classList.add('active');
-  btn.classList.add('active');
-}
-
-// ── TIPO H ──
-function setTipoH(t,btn){
-  state.tipoH=t;
-  document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active')});
-  btn.classList.add('active');
-  var notes={Convencional:'≥20% evita PMI. Sin seguro gubernamental.',FHA:'Mín 3.5% pronto. MIP 1.75% upfront + 0.55%/año.',VA:'Sin pronto. Solo veteranos. Sin PMI.',USDA:'Zonas rurales PR. 0% pronto. Guarantee fee 1%.'};
-  t('tipoHNote',notes[t]);
-  calc();
-}
-
-// ── UNITS ──
-var units=1;
-function addUnit(){
-  units++;
-  if(units>=2)document.getElementById('renta2wrap').style.display='block';
-  if(units>=3){document.getElementById('renta3wrap').style.display='block';document.getElementById('addUnitBtn').style.display='none';}
-}
-
-// ── SAVE ──
-function saveAnalysis(){
-  var name=document.getElementById('propName').value||'Propiedad';
-  var precio=v('precio');
-  var c=state.lastCalc||{};
-  var entry={name:name,precio:precio,date:new Date().toLocaleDateString('es-PR'),c:c};
-  state.saved.push(entry);
-  t('savedCount',state.saved.length);
-  renderSaved();
-}
-
-function renderSaved(){
-  if(state.saved.length===0){
-    document.getElementById('savedList').innerHTML='<div style="text-align:center;padding:60px 20px;color:#3a3a5a"><p style="font-size:36px;margin-bottom:12px">💾</p><p>No hay análisis guardados.</p></div>';
-    return;
-  }
-  var html='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px">';
-  state.saved.forEach(function(s,i){
-    var c=s.c||{};
-    html+='<div style="background:#0d0d18;border:1px solid #1e1e2e;border-radius:12px;padding:16px 18px">'
-      +'<div style="display:flex;justify-content:space-between;margin-bottom:10px"><div><p style="font-size:13px;font-weight:800;color:#e0e0f0">'+s.name+'</p><p style="font-size:10px;color:#4a4a6a">'+s.date+' · '+fmt(s.precio)+'</p></div>'
-      +'<button onclick="removeSaved('+i+')" style="background:none;border:none;color:#4a4a6a;cursor:pointer;font-size:14px">✕</button></div>'
-      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">';
-    [['Cap Rate',fmtP(c.capRate||0),sc(c.capRate||0)],['Cash on Cash',fmtP(c.coc||0),sc(c.coc||0)],['NOI/mes',fmtD(c.noim||0),'#f59e0b'],['CF/mes',fmtD(c.cfm||0),(c.cfm||0)>=0?'#22c55e':'#ef4444'],['DSCR',(c.dscr||0).toFixed(2)+'x',(c.dscr||0)>=1.25?'#22c55e':'#ef4444'],['Pago PITI',fmtD(c.pagoTotal||0),'#a78bfa']].forEach(function(r){
-      html+='<div style="background:#0a0a12;border-radius:7px;padding:8px 10px"><p style="font-size:8px;color:#4a4a6a;margin-bottom:3px">'+r[0]+'</p><p style="font-size:12px;font-weight:800;color:'+r[2]+'">'+r[1]+'</p></div>';
-    });
-    html+='</div></div>';
-  });
-  html+='</div>';
-  document.getElementById('savedList').innerHTML=html;
-}
-
-function removeSaved(i){state.saved.splice(i,1);t('savedCount',state.saved.length);renderSaved();}
-
-// ── INIT ──
-initRows();
-calc();
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 </script>
 </body>
 </html>
